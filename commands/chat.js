@@ -1,7 +1,8 @@
 import { Colors, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 
 import config from '../config.js';
-import { convertMessageToTitle, getChatResponse } from '../lib/completion.js';
+import { getChatResponse } from '../lib/completion.js';
+import { limit } from '../lib/string.js';
 
 export const data = new SlashCommandBuilder()
   .setName('chat')
@@ -17,8 +18,6 @@ export async function execute(interaction) {
   const user = interaction.user;
   const message = interaction.options.getString('message');
 
-  const title = await convertMessageToTitle(message);
-
   const embed = new EmbedBuilder()
     .setColor(Colors.Green)
     .setDescription(`<@${user.id}> has started a conversation! 💬`)
@@ -27,7 +26,7 @@ export async function execute(interaction) {
   await interaction.reply({ embeds: [embed] });
 
   const thread = await interaction.channel.threads.create({
-    name: `💬 ${user.username} - ${title}`,
+    name: `💬 ${user.username} - ${limit(message, 50)}`,
     autoArchiveDuration: 60,
     reason: config.bot.name,
     rateLimitPerUser: 1,
