@@ -6,6 +6,8 @@ Although WumpusGPT is not the same as ChatGPT, they both utlize the same languag
 
 Built with [OpenAI Node.js Library](https://github.com/openai/openai-node) and [discord.js](https://discord.js.org). Inspired by OpenAI's [GPT Discord Bot](https://github.com/openai/gpt-discord-bot).
 
+You can invite the bot to your server by clicking [here](https://discord.com/api/oauth2/authorize?client_id=1054835849893793872&permissions=397284550656&scope=bot).
+
 ## Roadmap
 
 > **Warning**
