@@ -1,0 +1,23 @@
+{
+  "name": "wumpus-gpt",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": {
+    "name": "biscxit",
+    "url": "https://github.com/biscxit"
+  },
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "openai": "^3.2.1"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.4"
+  }
+}
