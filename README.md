@@ -42,6 +42,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
     node index.js
     ```
     You should see an invite URL in the console. Copy and paste it into your browser to add the bot to your server.
+1. Start chatting with the bot via the `/chat` command!
 
 ## License
 
