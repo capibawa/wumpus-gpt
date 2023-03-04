@@ -80,15 +80,8 @@ export default new DiscordCommand({
       { role: 'user', content: message },
     ]);
 
-    if (!response) {
-      await interaction.reply({
-        content: 'There was an error while processing a response!',
-        ephemeral: true,
-      });
-
-      return;
-    }
-
-    await thread.send(response);
+    await thread.send(
+      response || 'There was an error while processing a response!'
+    );
   },
 });
