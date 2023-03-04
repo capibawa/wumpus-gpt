@@ -14,8 +14,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 > This is work in progress. Feel free to contribute!
 
 - [ ] Message Moderation
-- [ ] Server Whitelisting
-- [ ] Private Threads
+- [ ] Direct Messaging
 - [x] ~Thread Pruning~
 - [x] ~Single Question~
 
@@ -29,7 +28,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 ## Get Started
 
 1. Copy `.env.example` to `.env` and fill in the values as detailed below
-1. Create an SQL database and fill in `DATABASE_URL`
+1. Create a MySQL database (I recommend [PlanetScale](https://planetscale.com/) if you don't want to host locally) and fill in `DATABASE_URL`
 1. Create a Discord application at https://discord.com/developers/applications
 1. Go to the Bot tab and click "Add Bot"
     - Click "Reset Token" and fill in `DISCORD_TOKEN`
