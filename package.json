@@ -8,8 +8,8 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "dev": "nodemon src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
   },
   "dependencies": {
     "@biscxit/discord-module-loader": "^1.5.0",
@@ -21,11 +21,10 @@
     "toad-scheduler": "^2.2.0"
   },
   "devDependencies": {
+    "@tsconfig/node16": "^1.0.3",
     "@types/node": "^18.14.6",
-    "nodemon": "^2.0.21",
     "prettier": "^2.8.4",
-    "ts-node": "^10.9.1",
-    "tsconfig-paths": "^3.14.2",
+    "tsx": "^3.12.3",
     "typescript": "^4.9.5"
   }
 }
