@@ -15,8 +15,8 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 
 - [ ] Message Moderation
 - [ ] Server Whitelisting
-- [ ] Thread Closure
 - [ ] Private Threads
+- [x] ~Thread Pruning~
 - [x] ~Single Question~
 
 ## Features
@@ -24,10 +24,12 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 - Configurable bot instructions
 - Remembers previous messages for context
 - Allows for follow-up corrections
+- Automatic thread pruning
 
 ## Get Started
 
 1. Copy `.env.example` to `.env` and fill in the values as detailed below
+1. Create an SQL database and fill in `DATABASE_URL`
 1. Create a Discord application at https://discord.com/developers/applications
 1. Go to the Bot tab and click "Add Bot"
     - Click "Reset Token" and fill in `DISCORD_TOKEN`
