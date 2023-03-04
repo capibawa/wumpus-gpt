@@ -10,6 +10,7 @@ import {
 import config from '@/config';
 import { getChatResponse } from '@/lib/completion';
 import { limit } from '@/lib/helpers';
+import Conversation from '@/models/conversation';
 
 export default new DiscordCommand({
   command: {
@@ -58,30 +59,64 @@ export default new DiscordCommand({
 
     const user = interaction.user;
 
-    const embed = new EmbedBuilder()
-      .setColor(Colors.Green)
-      .setDescription(`<@${user.id}> has started a conversation! 💬`)
-      .addFields({ name: 'Message', value: message });
-
-    await interaction.reply({ embeds: [embed] });
-
-    const thread = await channel.threads.create({
-      name: `💬 ${user.username} - ${limit(message, 50)}`,
-      autoArchiveDuration: 60,
-      reason: config.bot.name,
-      rateLimitPerUser: 1,
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(Colors.Green)
+          .setDescription(`<@${user.id}> has started a conversation! 💬`)
+          .addFields({ name: 'Message', value: message }),
+      ],
     });
 
-    await thread.members.add(user);
+    try {
+      const thread = await channel.threads.create({
+        name: `💬 ${user.username} - ${limit(message, 50)}`,
+        autoArchiveDuration: 60,
+        reason: config.bot.name,
+        rateLimitPerUser: 1,
+      });
 
-    await thread.sendTyping();
+      try {
+        const pruneInterval = Math.ceil(config.bot.prune_interval as number);
 
-    const response = await getChatResponse([
-      { role: 'user', content: message },
-    ]);
+        await Conversation.create({
+          interactionId: (await interaction.fetchReply()).id,
+          threadId: thread.id,
+          expiresAt:
+            pruneInterval > 0
+              ? new Date(Date.now() + 3600000 * pruneInterval)
+              : null,
+        });
+      } catch (err) {
+        await (await thread.fetchStarterMessage())?.delete();
+        await thread.delete();
 
-    await thread.send(
-      response || 'There was an error while processing a response!'
-    );
+        throw err;
+      }
+
+      await thread.members.add(user);
+
+      await thread.sendTyping();
+
+      const response = await getChatResponse([
+        { role: 'user', content: message },
+      ]);
+
+      await thread.send(
+        response || 'There was an error while processing a response!'
+      );
+    } catch (err) {
+      console.error(err);
+
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(Colors.Red)
+            .setTitle('There was an error while creating a thread.')
+            .setDescription(`<@${user.id}> has started a conversation! 💬`)
+            .addFields({ name: 'Message', value: message }),
+        ],
+      });
+    }
   },
 });

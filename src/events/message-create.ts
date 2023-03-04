@@ -19,19 +19,17 @@ export default new DiscordEvent(
       return;
     }
 
-    const thread = channel;
-
-    if (thread.ownerId !== client.user.id) {
+    if (channel.ownerId !== client.user.id) {
       return;
     }
 
-    if (thread.archived || thread.locked || !thread.name.startsWith('💬')) {
+    if (channel.archived || channel.locked || !channel.name.startsWith('💬')) {
       return;
     }
 
-    await thread.sendTyping();
+    await channel.sendTyping();
 
-    const messages = await thread.messages.fetch();
+    const messages = await channel.messages.fetch();
 
     const parsedMessages = messages
       .filter((message) => message.content)
@@ -53,6 +51,6 @@ export default new DiscordEvent(
       return;
     }
 
-    await thread.send(response);
+    await channel.send(response);
   }
 );
