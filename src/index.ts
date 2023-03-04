@@ -95,7 +95,9 @@ client.on('ready', async () => {
           await conversation.destroy();
         });
 
-        console.log(`Pruned ${conversations.length} expired conversations.`);
+        if (conversations.length > 0) {
+          console.log(`Pruned ${conversations.length} expired conversations.`);
+        }
       } catch (err) {
         console.error(err);
       }
