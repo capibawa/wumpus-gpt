@@ -1,6 +1,6 @@
 # WumpusGPT
 
-WumpusGPT is a Discord bot written in JavaScript and powered by OpenAI's `gpt-3.5-turbo` language model.
+WumpusGPT is a Discord bot written in TypeScript and powered by OpenAI's `gpt-3.5-turbo` language model.
 
 Although WumpusGPT is not the same as ChatGPT, they both utlize the same language model so you will yield very similar results.
 
@@ -38,8 +38,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 1. Install the dependencies and run the bot
     ```
     npm install
-    node deploy-commands.js # YOU ONLY NEED TO DO THIS ONCE
-    node index.js
+    npm start
     ```
     You should see an invite URL in the console. Copy and paste it into your browser to add the bot to your server.
 1. Start chatting with the bot via the `/chat` or `/say` commands!

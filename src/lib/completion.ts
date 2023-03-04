@@ -1,14 +1,13 @@
-import { Configuration, OpenAIApi } from 'openai';
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 
-import config from '../config.js';
+import config from '@/config';
 
-const configuration = new Configuration({
-  apiKey: config.openai.api_key,
-});
-
+const configuration = new Configuration({ apiKey: config.openai.api_key });
 const openai = new OpenAIApi(configuration);
 
-export async function getChatResponse(messages) {
+export async function getChatResponse(
+  messages: ChatCompletionRequestMessage[]
+): Promise<string | false> {
   try {
     const completion = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
@@ -23,8 +22,14 @@ export async function getChatResponse(messages) {
       max_tokens: 2048,
     });
 
-    return completion.data.choices[0].message.content;
+    const message = completion.data.choices[0].message;
+
+    if (message) {
+      return message.content;
+    }
   } catch (err) {
     console.error(err);
   }
+
+  return false;
 }
