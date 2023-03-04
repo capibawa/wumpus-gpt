@@ -1,4 +1,4 @@
-import { DiscordEvent } from '@biscxit/discord-module-loader';
+import { DiscordEvent } from 'discord-module-loader';
 import { Events, Message } from 'discord.js';
 import { ChatCompletionRequestMessage } from 'openai';
 

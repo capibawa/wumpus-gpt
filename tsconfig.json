@@ -4,6 +4,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "importHelpers": true,
+    "removeComments": true,
     "sourceMap": false,
     "baseUrl": ".",
     "paths": {

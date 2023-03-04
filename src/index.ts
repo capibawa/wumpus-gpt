@@ -1,4 +1,4 @@
-import ModuleLoader from '@biscxit/discord-module-loader';
+import ModuleLoader from 'discord-module-loader';
 import {
   Client,
   Colors,
@@ -42,8 +42,8 @@ client.on('ready', async () => {
   }
 
   try {
-    await moduleLoader.loadEvents('src/events');
-    await moduleLoader.loadCommands('src/commands');
+    await moduleLoader.loadCommands('dist/commands');
+    await moduleLoader.loadEvents('dist/events');
     await moduleLoader.updateSlashCommands();
   } catch (err) {
     console.error(err);

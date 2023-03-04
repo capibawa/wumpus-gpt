@@ -1,4 +1,4 @@
-import { DiscordCommand } from '@biscxit/discord-module-loader';
+import { DiscordCommand } from 'discord-module-loader';
 import {
   ApplicationCommandOptionType,
   ChatInputCommandInteraction,
