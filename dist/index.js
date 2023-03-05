@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const discord_module_loader_1 = tslib_1.__importDefault(require("discord-module-loader"));
 const discord_js_1 = require("discord.js");
+const path_1 = tslib_1.__importDefault(require("path"));
 const sequelize_1 = require("sequelize");
 const toad_scheduler_1 = require("toad-scheduler");
 const config_1 = tslib_1.__importDefault(require("./config"));
@@ -30,8 +31,15 @@ client.on('ready', async () => {
         process.exit(1);
     }
     try {
-        await moduleLoader.loadCommands('dist/commands');
-        await moduleLoader.loadEvents('dist/events');
+        const isTsNode = process.argv[0].includes('ts-node');
+        if (isTsNode) {
+            require('./load-modules');
+        }
+        const modulesDir = isTsNode ? '.ts-node' : 'dist';
+        const commandsPath = path_1.default.join(__dirname, `../${modulesDir}`, 'commands');
+        const eventsPath = path_1.default.join(__dirname, `../${modulesDir}`, 'events');
+        await moduleLoader.loadCommands(commandsPath);
+        await moduleLoader.loadEvents(eventsPath);
         await moduleLoader.updateSlashCommands();
     }
     catch (err) {

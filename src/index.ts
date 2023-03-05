@@ -7,6 +7,7 @@ import {
   Snowflake,
   ThreadChannel,
 } from 'discord.js';
+import path from 'path';
 import { Op } from 'sequelize';
 import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 
@@ -42,8 +43,20 @@ client.on('ready', async () => {
   }
 
   try {
-    await moduleLoader.loadCommands('dist/commands');
-    await moduleLoader.loadEvents('dist/events');
+    const isTsNode = process.argv[0].includes('ts-node');
+
+    if (isTsNode) {
+      require('./load-modules');
+    }
+
+    const modulesDir = isTsNode ? '.ts-node' : 'dist';
+
+    const commandsPath = path.join(__dirname, `../${modulesDir}`, 'commands');
+    const eventsPath = path.join(__dirname, `../${modulesDir}`, 'events');
+
+    await moduleLoader.loadCommands(commandsPath);
+    await moduleLoader.loadEvents(eventsPath);
+
     await moduleLoader.updateSlashCommands();
   } catch (err) {
     console.error(err);
