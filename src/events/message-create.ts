@@ -2,7 +2,9 @@ import { DiscordEvent } from 'discord-module-loader';
 import { Client, DMChannel, Events, Message, ThreadChannel } from 'discord.js';
 import { ChatCompletionRequestMessage } from 'openai';
 
+import config from '@/config';
 import { getChatResponse } from '@/lib/openai';
+import Conversation from '@/models/conversation';
 
 // TODO: Retain previous messages with constraints (e.g. 10 messages max).
 async function handleDirectMessage(
@@ -61,6 +63,23 @@ async function handleChatMessage(
   } catch (err) {
     if (err instanceof Error) {
       await messages.first()?.reply(err.message);
+
+      // Mark conversation as expired if the error is due to token limits.
+      const pruneInterval = Math.ceil(config.bot.prune_interval as number);
+
+      if (err.message.includes('token') && pruneInterval > 0) {
+        const conversation = await Conversation.findOne({
+          where: { threadId: channel.id },
+        });
+
+        if (!conversation || conversation.get('expiresAt')) {
+          return;
+        }
+
+        await conversation.update({
+          expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
+        });
+      }
     }
   }
 }
