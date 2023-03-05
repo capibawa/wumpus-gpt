@@ -5,8 +5,8 @@ const discord_js_1 = require("discord.js");
 const completion_1 = require("../lib/completion");
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
-        name: 'say',
-        description: 'Say or ask anything!',
+        name: 'ask',
+        description: 'Ask anything!',
         options: [
             {
                 type: discord_js_1.ApplicationCommandOptionType.String,

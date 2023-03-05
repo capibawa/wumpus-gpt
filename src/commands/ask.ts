@@ -8,8 +8,8 @@ import { getChatResponse } from '@/lib/completion';
 
 export default new DiscordCommand({
   command: {
-    name: 'say',
-    description: 'Say or ask anything!',
+    name: 'ask',
+    description: 'Ask anything!',
     options: [
       {
         type: ApplicationCommandOptionType.String,
