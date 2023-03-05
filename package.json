@@ -8,8 +8,9 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon --watch src src/index.ts",
-    "build": "tsc && tsc-alias",
+    "dev": "nodemon --watch src --exec npm run dev:serve",
+    "dev:serve": "rimraf .ts-node && ts-node src/index.ts",
+    "build": "rimraf dist && tsc && tsc-alias",
     "start": "node dist/index.js"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "@types/node": "^18.14.6",
     "nodemon": "^2.0.21",
     "prettier": "^2.8.4",
+    "rimraf": "^4.3.0",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.8.2",
     "tsconfig-paths": "^4.1.2",
