@@ -1,8 +1,8 @@
 # WumpusGPT
 
-WumpusGPT is a Discord bot written in TypeScript and powered by OpenAI's `gpt-3.5-turbo` language model.
+WumpusGPT is a Discord chatbot written in TypeScript and powered by OpenAI's `gpt-3.5-turbo` language model.
 
-Although WumpusGPT is not the same as ChatGPT, they both utilize the same language model so you will yield very similar results.
+Although WumpusGPT is not quite the same as ChatGPT, they both utilize the same language model so you will yield very similar results.
 
 Built with [OpenAI Node.js Library](https://github.com/openai/openai-node) and [discord.js](https://discord.js.org). Inspired by OpenAI's [GPT Discord Bot](https://github.com/openai/gpt-discord-bot).
 
