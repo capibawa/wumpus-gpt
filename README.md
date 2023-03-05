@@ -36,9 +36,10 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
     - Enable "Message Content Intent" under "Privileged Gateway Intents"
 1. Go to the OAuth2 tab, copy your "Client ID", and fill in `DISCORD_CLIENT_ID`
 1. Go to https://beta.openai.com/account/api-keys, create an API key, and fill in `OPENAI_API_KEY`
-1. Install the dependencies and run the bot
+1. Install the dependencies, build and run the bot
     ```
     npm install
+    npm run build
     npm start
     ```
     You should see an invite URL in the console. Copy and paste it into your browser to add the bot to your server.
