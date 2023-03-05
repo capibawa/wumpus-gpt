@@ -1,5 +1,10 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
+  "ts-node": {
+    "require": ["tsconfig-paths/register"],
+    "compilerHost": true,
+    "emit": true
+  },
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
@@ -12,6 +17,6 @@
     }
   },
   "files": ["src/index.ts"],
-  "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", ".ts-node", "src/load-modules.ts"]
 }
