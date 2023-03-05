@@ -58,8 +58,8 @@ client.on('ready', async () => {
                     },
                 },
             });
-            conversations.forEach(async (conversation) => {
-                const thread = (await client.channels.fetch(conversation.get('threadId')));
+            for (const conversation of conversations) {
+                const thread = (await client.channels.cache.get(conversation.get('threadId')));
                 if (thread) {
                     const interaction = await thread.parent?.messages.fetch(conversation.get('interactionId'));
                     if (interaction && interaction.embeds.length > 0) {
@@ -78,7 +78,7 @@ client.on('ready', async () => {
                     await thread.delete();
                 }
                 await conversation.destroy();
-            });
+            }
             if (conversations.length > 0) {
                 console.log(`Pruned ${conversations.length} expired conversations.`);
             }

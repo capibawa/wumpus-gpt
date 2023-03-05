@@ -11,9 +11,9 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 ## Roadmap
 
 > **Warning**
-> This is work in progress. Feel free to contribute!
+> This is a work in progress. Feel free to contribute!
 
-- [ ] Message Moderation
+- [x] ~Message Moderation~
 - [x] ~Direct Messaging~
 - [x] ~Thread Pruning~
 - [x] ~Single Question~
@@ -23,6 +23,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 - Configurable bot instructions
 - Remembers previous messages for context
 - Allows for follow-up corrections
+- Message moderation and filtering
 - Automatic thread pruning
 
 ## Get Started

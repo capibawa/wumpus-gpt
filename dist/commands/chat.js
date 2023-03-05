@@ -4,8 +4,8 @@ const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
 const config_1 = tslib_1.__importDefault(require("../config"));
-const completion_1 = require("../lib/completion");
 const helpers_1 = require("../lib/helpers");
+const openai_1 = require("../lib/openai");
 const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
@@ -36,6 +36,13 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
+        else if (channel.isDMBased()) {
+            await interaction.reply({
+                content: "You can't start a conversation in a DM!",
+                ephemeral: true,
+            });
+            return;
+        }
         const message = interaction.options.getString('message');
         if (!message || message.length === 0) {
             await interaction.reply({
@@ -45,14 +52,40 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const user = interaction.user;
-        await interaction.reply({
-            embeds: [
-                new discord_js_1.EmbedBuilder()
-                    .setColor(discord_js_1.Colors.Green)
-                    .setDescription(`<@${user.id}> has started a conversation! 💬`)
-                    .addFields({ name: 'Message', value: message }),
-            ],
-        });
+        const embed = new discord_js_1.EmbedBuilder()
+            .setColor(discord_js_1.Colors.Green)
+            .setDescription(`<@${user.id}> has started a conversation! 💬`)
+            .setFields([
+            { name: 'Message', value: message },
+            { name: 'Thread', value: 'Creating...' },
+        ]);
+        await interaction.reply({ embeds: [embed] });
+        let response = null;
+        try {
+            response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }]);
+        }
+        catch (err) {
+            if (err instanceof Error) {
+                const isFlagged = err.message.includes('moderation');
+                await interaction.editReply({
+                    embeds: [
+                        new discord_js_1.EmbedBuilder()
+                            .setColor(isFlagged ? discord_js_1.Colors.DarkRed : discord_js_1.Colors.Orange)
+                            .setTitle(isFlagged
+                            ? 'Your message has been blocked by moderation.'
+                            : 'There was an error while creating a thread.')
+                            .setDescription(`<@${user.id}> has started a conversation! 💬`)
+                            .addFields({
+                            name: 'Message',
+                            value: isFlagged ? 'REDACTED' : message,
+                        }),
+                    ],
+                });
+            }
+        }
+        if (!response) {
+            return;
+        }
         try {
             const thread = await channel.threads.create({
                 name: `💬 ${user.username} - ${(0, helpers_1.limit)(message, 50)}`,
@@ -76,11 +109,15 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 throw err;
             }
             await thread.members.add(user);
-            await thread.sendTyping();
-            const response = await (0, completion_1.getChatResponse)([
-                { role: 'user', content: message },
-            ]);
-            await thread.send(response || 'There was an error while processing a response!');
+            await thread.send(response);
+            await interaction.editReply({
+                embeds: [
+                    embed.setFields([
+                        { name: 'Message', value: message },
+                        { name: 'Thread', value: thread.toString() },
+                    ]),
+                ],
+            });
         }
         catch (err) {
             console.error(err);

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
-const completion_1 = require("../lib/completion");
+const openai_1 = require("../lib/openai");
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
         name: 'ask',
@@ -26,9 +26,16 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         await interaction.deferReply();
-        const response = await (0, completion_1.getChatResponse)([
-            { role: 'user', content: message },
-        ]);
-        await interaction.editReply(response || 'There was an error while processing a response!');
+        try {
+            const response = await (0, openai_1.getChatResponse)([
+                { role: 'user', content: message },
+            ]);
+            await interaction.editReply(response);
+        }
+        catch (err) {
+            if (err instanceof Error) {
+                await interaction.editReply(err.message);
+            }
+        }
     },
 });

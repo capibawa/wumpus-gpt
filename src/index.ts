@@ -80,8 +80,8 @@ client.on('ready', async () => {
           },
         });
 
-        conversations.forEach(async (conversation) => {
-          const thread = (await client.channels.fetch(
+        for (const conversation of conversations) {
+          const thread = (await client.channels.cache.get(
             conversation.get('threadId') as Snowflake
           )) as ThreadChannel;
 
@@ -109,7 +109,7 @@ client.on('ready', async () => {
           }
 
           await conversation.destroy();
-        });
+        }
 
         if (conversations.length > 0) {
           console.log(`Pruned ${conversations.length} expired conversations.`);

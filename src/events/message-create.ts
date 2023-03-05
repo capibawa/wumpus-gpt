@@ -2,9 +2,9 @@ import { DiscordEvent } from 'discord-module-loader';
 import { Client, DMChannel, Events, Message, ThreadChannel } from 'discord.js';
 import { ChatCompletionRequestMessage } from 'openai';
 
-import { getChatResponse } from '@/lib/completion';
+import { getChatResponse } from '@/lib/openai';
 
-// TODO: Retain previous messages with constraints (e.g. 10 messages max)
+// TODO: Retain previous messages with constraints (e.g. 10 messages max).
 async function handleDirectMessage(
   client: Client<true>,
   channel: DMChannel,
@@ -12,13 +12,17 @@ async function handleDirectMessage(
 ) {
   await channel.sendTyping();
 
-  const response = await getChatResponse([
-    { role: 'user', content: message.content },
-  ]);
+  try {
+    const response = await getChatResponse([
+      { role: 'user', content: message.content },
+    ]);
 
-  await message.reply(
-    response || 'There was an error while processing a response!'
-  );
+    await channel.send(response);
+  } catch (err) {
+    if (err instanceof Error) {
+      await message.reply(err.message);
+    }
+  }
 }
 
 async function handleChatMessage(
@@ -44,21 +48,21 @@ async function handleChatMessage(
       return {
         role: message.author.id === client.user.id ? 'assistant' : 'user',
         content: message.content,
-      } as ChatCompletionRequestMessage;
+      };
     })
     .reverse();
 
-  const response = await getChatResponse(parsedMessages);
+  try {
+    const response = await getChatResponse(
+      parsedMessages as Array<ChatCompletionRequestMessage>
+    );
 
-  if (!response) {
-    await messages
-      .first()
-      ?.reply('There was an error while processing a response!');
-
-    return;
+    await channel.send(response);
+  } catch (err) {
+    if (err instanceof Error) {
+      await messages.first()?.reply(err.message);
+    }
   }
-
-  await channel.send(response);
 }
 
 export default new DiscordEvent(
