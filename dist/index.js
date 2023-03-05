@@ -13,8 +13,10 @@ const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
         discord_js_1.GatewayIntentBits.GuildMessages,
+        discord_js_1.GatewayIntentBits.DirectMessages,
         discord_js_1.GatewayIntentBits.MessageContent,
     ],
+    partials: [discord_js_1.Partials.Channel],
 });
 const moduleLoader = new discord_module_loader_1.default(client);
 const scheduler = new toad_scheduler_1.ToadScheduler();
