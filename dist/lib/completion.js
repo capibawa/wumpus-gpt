@@ -14,17 +14,17 @@ async function getChatResponse(messages) {
             ...messages,
         ];
         const input = data.map((message) => message.content).join('\n');
-        if ((0, gpt_3_encoder_1.encode)(input).length > config_1.default.bot.token_limit) {
+        if ((0, gpt_3_encoder_1.encode)(input).length > config_1.default.openai.max_tokens) {
             return 'The request has exceeded the token limit! Try again with a shorter message or start another conversation via the `/chat` command.';
         }
         const completion = await openai.createChatCompletion({
             model: 'gpt-3.5-turbo',
             messages: data,
-            temperature: 0.7,
-            top_p: 1.0,
-            frequency_penalty: 0.0,
-            presence_penalty: 0.0,
-            max_tokens: config_1.default.bot.token_limit,
+            temperature: config_1.default.openai.temperature,
+            top_p: config_1.default.openai.top_p,
+            frequency_penalty: config_1.default.openai.frequency_penalty,
+            presence_penalty: config_1.default.openai.presence_penalty,
+            max_tokens: config_1.default.openai.max_tokens,
         });
         const message = completion.data.choices[0].message;
         if (message) {
