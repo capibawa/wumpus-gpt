@@ -8,8 +8,8 @@ import {
 } from 'discord.js';
 
 import config from '@/config';
-import { getChatResponse } from '@/lib/completion';
 import { limit } from '@/lib/helpers';
+import { getChatResponse } from '@/lib/openai';
 import Conversation from '@/models/conversation';
 
 export default new DiscordCommand({
@@ -44,6 +44,13 @@ export default new DiscordCommand({
       });
 
       return;
+    } else if (channel.isDMBased()) {
+      await interaction.reply({
+        content: "You can't start a conversation in a DM!",
+        ephemeral: true,
+      });
+
+      return;
     }
 
     const message = interaction.options.getString('message');
@@ -59,14 +66,47 @@ export default new DiscordCommand({
 
     const user = interaction.user;
 
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(Colors.Green)
-          .setDescription(`<@${user.id}> has started a conversation! 💬`)
-          .addFields({ name: 'Message', value: message }),
-      ],
-    });
+    const embed = new EmbedBuilder()
+      .setColor(Colors.Green)
+      .setDescription(`<@${user.id}> has started a conversation! 💬`)
+      .setFields([
+        { name: 'Message', value: message },
+        { name: 'Thread', value: 'Creating...' },
+      ]);
+
+    await interaction.reply({ embeds: [embed] });
+
+    let response = null;
+
+    try {
+      response = await getChatResponse([{ role: 'user', content: message }]);
+    } catch (err) {
+      if (err instanceof Error) {
+        // TODO: Custom errors
+        const isFlagged = err.message.includes('moderation');
+
+        await interaction.editReply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(isFlagged ? Colors.DarkRed : Colors.Orange)
+              .setTitle(
+                isFlagged
+                  ? 'Your message has been blocked by moderation.'
+                  : 'There was an error while creating a thread.'
+              )
+              .setDescription(`<@${user.id}> has started a conversation! 💬`)
+              .addFields({
+                name: 'Message',
+                value: isFlagged ? 'REDACTED' : message,
+              }),
+          ],
+        });
+      }
+    }
+
+    if (!response) {
+      return;
+    }
 
     try {
       const thread = await channel.threads.create({
@@ -96,15 +136,16 @@ export default new DiscordCommand({
 
       await thread.members.add(user);
 
-      await thread.sendTyping();
+      await thread.send(response);
 
-      const response = await getChatResponse([
-        { role: 'user', content: message },
-      ]);
-
-      await thread.send(
-        response || 'There was an error while processing a response!'
-      );
+      await interaction.editReply({
+        embeds: [
+          embed.setFields([
+            { name: 'Message', value: message },
+            { name: 'Thread', value: thread.toString() },
+          ]),
+        ],
+      });
     } catch (err) {
       console.error(err);
 

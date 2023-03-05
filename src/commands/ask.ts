@@ -4,7 +4,7 @@ import {
   ChatInputCommandInteraction,
 } from 'discord.js';
 
-import { getChatResponse } from '@/lib/completion';
+import { getChatResponse } from '@/lib/openai';
 
 export default new DiscordCommand({
   command: {
@@ -33,12 +33,16 @@ export default new DiscordCommand({
 
     await interaction.deferReply();
 
-    const response = await getChatResponse([
-      { role: 'user', content: message },
-    ]);
+    try {
+      const response = await getChatResponse([
+        { role: 'user', content: message },
+      ]);
 
-    await interaction.editReply(
-      response || 'There was an error while processing a response!'
-    );
+      await interaction.editReply(response);
+    } catch (err) {
+      if (err instanceof Error) {
+        await interaction.editReply(err.message);
+      }
+    }
   },
 });

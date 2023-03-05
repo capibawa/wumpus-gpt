@@ -2,13 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
-const completion_1 = require("../lib/completion");
+const openai_1 = require("../lib/openai");
 async function handleDirectMessage(client, channel, message) {
     await channel.sendTyping();
-    const response = await (0, completion_1.getChatResponse)([
-        { role: 'user', content: message.content },
-    ]);
-    await message.reply(response || 'There was an error while processing a response!');
+    try {
+        const response = await (0, openai_1.getChatResponse)([
+            { role: 'user', content: message.content },
+        ]);
+        await channel.send(response);
+    }
+    catch (err) {
+        if (err instanceof Error) {
+            await message.reply(err.message);
+        }
+    }
 }
 async function handleChatMessage(client, channel, message) {
     if (channel.ownerId !== client.user.id) {
@@ -28,14 +35,15 @@ async function handleChatMessage(client, channel, message) {
         };
     })
         .reverse();
-    const response = await (0, completion_1.getChatResponse)(parsedMessages);
-    if (!response) {
-        await messages
-            .first()
-            ?.reply('There was an error while processing a response!');
-        return;
+    try {
+        const response = await (0, openai_1.getChatResponse)(parsedMessages);
+        await channel.send(response);
     }
-    await channel.send(response);
+    catch (err) {
+        if (err instanceof Error) {
+            await messages.first()?.reply(err.message);
+        }
+    }
 }
 exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.MessageCreate, async (message) => {
     const client = message.client;
