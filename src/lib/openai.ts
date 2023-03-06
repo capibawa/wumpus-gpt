@@ -101,6 +101,22 @@ export async function getModeratedChatMessages(
   return moderatedMessages;
 }
 
+export async function createImage(prompt: string): Promise<string> {
+  let imageUrl = '';
+
+  try {
+    const image = await openai.createImage({
+      prompt,
+    });
+
+    imageUrl = image.data.data[0].url || '';
+  } catch (err) {
+    console.error(err);
+  }
+
+  return imageUrl;
+}
+
 export async function isTextFlagged(
   input: CreateModerationRequestInput
 ): Promise<boolean> {

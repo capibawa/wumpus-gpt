@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isTextFlagged = exports.getModeratedChatMessages = exports.getChatResponse = void 0;
+exports.isTextFlagged = exports.createImage = exports.getModeratedChatMessages = exports.getChatResponse = void 0;
 const tslib_1 = require("tslib");
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const openai_1 = require("openai");
@@ -66,6 +66,20 @@ async function getModeratedChatMessages(messages) {
     return moderatedMessages;
 }
 exports.getModeratedChatMessages = getModeratedChatMessages;
+async function createImage(prompt) {
+    let imageUrl = '';
+    try {
+        const image = await openai.createImage({
+            prompt,
+        });
+        imageUrl = image.data.data[0].url || '';
+    }
+    catch (err) {
+        console.error(err);
+    }
+    return imageUrl;
+}
+exports.createImage = createImage;
 async function isTextFlagged(input) {
     try {
         const moderation = await openai.createModeration({

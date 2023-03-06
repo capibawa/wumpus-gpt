@@ -14,6 +14,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 > This is a work in progress. Feel free to contribute!
 
 - [ ] Closable Threads
+- [x] ~Image Generation~
 - [x] ~Rate Limiting~
 - [x] ~Message Moderation~
 - [x] ~Thread Pruning~
@@ -21,8 +22,9 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 ## Features
 
 - Configurable bot instructions
-- Remembers previous messages for context
-- Rate limiting per user to prevent spam or abuse
+- Remembers previous messages in threads
+- Image generation using DALL·E via `/image`
+- Rate limiting per user to prevent abuse
 - Message moderation and filtering
 - Automatic thread pruning
 
