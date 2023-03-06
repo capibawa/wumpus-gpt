@@ -2,6 +2,10 @@ import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
 import { getChatResponse } from '@/lib/openai';
+import { RateLimiter } from '@/lib/rate-limiter';
+
+// Limited to 3 executions per minute.
+const rateLimiter = new RateLimiter(3, 'minute');
 
 export default new DiscordCommand({
   command: {
@@ -32,20 +36,29 @@ export default new DiscordCommand({
       return;
     }
 
-    await interaction.deferReply();
+    const executed = rateLimiter.attempt(interaction.user.id, async () => {
+      await interaction.deferReply();
 
-    try {
-      const response = await getChatResponse([
-        { role: 'user', content: message },
-      ]);
+      try {
+        const response = await getChatResponse([
+          { role: 'user', content: message },
+        ]);
 
-      await interaction.editReply(response);
-    } catch (err) {
-      await interaction.editReply(
-        err instanceof Error
-          ? err.message
-          : 'There was an error while processing your response.'
-      );
+        await interaction.editReply(response);
+      } catch (err) {
+        await interaction.editReply(
+          err instanceof Error
+            ? err.message
+            : 'There was an error while processing your response.'
+        );
+      }
+    });
+
+    if (!executed) {
+      await interaction.reply({
+        content: 'You are currently being rate limited.',
+        ephemeral: true,
+      });
     }
   },
 });

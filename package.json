@@ -18,6 +18,7 @@
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "gpt-3-encoder": "^1.1.4",
+    "limiter": "^2.1.0",
     "mysql2": "^3.2.0",
     "openai": "^3.2.1",
     "sequelize": "^6.29.0",

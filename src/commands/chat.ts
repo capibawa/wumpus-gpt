@@ -13,6 +13,10 @@ import config from '@/config';
 import { destroyThread, limit } from '@/lib/helpers';
 import { getChatResponse } from '@/lib/openai';
 import Conversation from '@/models/conversation';
+import { RateLimiter } from '@/lib/rate-limiter';
+
+// Limited to 5 executions per 15 minutes.
+const rateLimiter = new RateLimiter(5, 900000);
 
 export default new DiscordCommand({
   command: {
@@ -63,71 +67,80 @@ export default new DiscordCommand({
       return;
     }
 
-    await interaction.reply({
-      embeds: [getThreadCreatingEmbed(interaction.user, message)],
-    });
-
-    let response = null;
-
-    try {
-      // TODO: Proper error handling.
-      response = await getChatResponse([{ role: 'user', content: message }]);
-    } catch (err) {
-      if (err instanceof Error) {
-        // We wouldn't need to do this if `getChatResponse` had proper error handling.
-        const isModerated = err.message.includes('moderation');
-
-        await interaction.editReply({
-          embeds: [
-            isModerated
-              ? getModeratedEmbed(interaction.user, message)
-              : getErrorEmbed(interaction.user, message),
-          ],
-        });
-
-        return;
-      }
-
-      throw err;
-    }
-
-    try {
-      const thread = await channel.threads.create({
-        name: `💬 ${interaction.user.username} - ${limit(message, 50)}`,
-        autoArchiveDuration: 60,
-        reason: config.bot.name,
-        rateLimitPerUser: 1,
+    const executed = rateLimiter.attempt(interaction.user.id, async () => {
+      await interaction.reply({
+        embeds: [getThreadCreatingEmbed(interaction.user, message)],
       });
 
-      try {
-        const pruneInterval = Math.ceil(config.bot.prune_interval as number);
+      let response = null;
 
-        await Conversation.create({
-          interactionId: (await interaction.fetchReply()).id,
-          threadId: thread.id,
-          expiresAt:
-            pruneInterval > 0
-              ? new Date(Date.now() + 3600000 * pruneInterval)
-              : null,
-        });
+      try {
+        // TODO: Proper error handling.
+        response = await getChatResponse([{ role: 'user', content: message }]);
       } catch (err) {
-        await destroyThread(thread);
+        if (err instanceof Error) {
+          // We wouldn't need to do this if `getChatResponse` had proper error handling.
+          const isModerated = err.message.includes('moderation');
+
+          await interaction.editReply({
+            embeds: [
+              isModerated
+                ? getModeratedEmbed(interaction.user, message)
+                : getErrorEmbed(interaction.user, message),
+            ],
+          });
+
+          return;
+        }
 
         throw err;
       }
 
-      await thread.members.add(interaction.user);
+      try {
+        const thread = await channel.threads.create({
+          name: `💬 ${interaction.user.username} - ${limit(message, 50)}`,
+          autoArchiveDuration: 60,
+          reason: config.bot.name,
+          rateLimitPerUser: 1,
+        });
 
-      await thread.send(response);
+        try {
+          const pruneInterval = Math.ceil(config.bot.prune_interval as number);
 
-      await interaction.editReply({
-        embeds: [getThreadCreatedEmbed(interaction.user, message, thread)],
-      });
-    } catch (err) {
-      console.error(err);
+          await Conversation.create({
+            interactionId: (await interaction.fetchReply()).id,
+            threadId: thread.id,
+            expiresAt:
+              pruneInterval > 0
+                ? new Date(Date.now() + 3600000 * pruneInterval)
+                : null,
+          });
+        } catch (err) {
+          await destroyThread(thread);
 
-      await interaction.editReply({
-        embeds: [getErrorEmbed(interaction.user, message)],
+          throw err;
+        }
+
+        await thread.members.add(interaction.user);
+
+        await thread.send(response);
+
+        await interaction.editReply({
+          embeds: [getThreadCreatedEmbed(interaction.user, message, thread)],
+        });
+      } catch (err) {
+        console.error(err);
+
+        await interaction.editReply({
+          embeds: [getErrorEmbed(interaction.user, message)],
+        });
+      }
+    });
+
+    if (!executed) {
+      await interaction.reply({
+        content: 'You are currently being rate limited.',
+        ephemeral: true,
       });
     }
   },
