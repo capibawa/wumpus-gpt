@@ -12,8 +12,8 @@ import {
 import config from '@/config';
 import { destroyThread, limit } from '@/lib/helpers';
 import { getChatResponse } from '@/lib/openai';
-import Conversation from '@/models/conversation';
 import { RateLimiter } from '@/lib/rate-limiter';
+import Conversation from '@/models/conversation';
 
 // Limited to 5 executions per 15 minutes.
 const rateLimiter = new RateLimiter(5, 900000);
