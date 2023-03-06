@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isTextFlagged = exports.getModeratedChatMessages = exports.getChatResponse = void 0;
 const tslib_1 = require("tslib");
+const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const openai_1 = require("openai");
 const config_1 = tslib_1.__importDefault(require("../config"));
 const helpers_1 = require("../lib/helpers");
@@ -14,7 +15,8 @@ async function getChatResponse(messages) {
     }
     const systemMessage = {
         role: 'system',
-        content: config_1.default.bot.instructions,
+        content: config_1.default.bot.instructions +
+            ` The current date is ${(0, format_1.default)(new Date(), 'PPP')}.`,
     };
     const moderatedMessages = await getModeratedChatMessages(messages);
     const chatMessages = [systemMessage, ...moderatedMessages, latestMessage];

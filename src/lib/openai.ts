@@ -1,3 +1,4 @@
+import format from 'date-fns/format';
 import {
   ChatCompletionRequestMessage,
   Configuration,
@@ -23,7 +24,9 @@ export async function getChatResponse(
 
   const systemMessage = {
     role: 'system',
-    content: config.bot.instructions,
+    content:
+      config.bot.instructions +
+      ` The current date is ${format(new Date(), 'PPP')}.`,
   } as ChatCompletionRequestMessage;
 
   const moderatedMessages = await getModeratedChatMessages(messages);

@@ -5,8 +5,7 @@ import { exceedsTokenLimit } from '@/lib/helpers';
 import { getChatResponse } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
-// Limited to 3 executions per minute.
-const rateLimiter = new RateLimiter(3, 'minute');
+const rateLimiter = new RateLimiter(5, 'minute');
 
 export default new DiscordCommand({
   command: {

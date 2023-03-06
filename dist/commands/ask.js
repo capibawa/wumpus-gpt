@@ -5,7 +5,7 @@ const discord_js_1 = require("discord.js");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = require("../lib/rate-limiter");
-const rateLimiter = new rate_limiter_1.RateLimiter(3, 'minute');
+const rateLimiter = new rate_limiter_1.RateLimiter(5, 'minute');
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
         name: 'ask',
