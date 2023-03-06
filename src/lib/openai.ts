@@ -15,24 +15,26 @@ const openai = new OpenAIApi(configuration);
 export async function getChatResponse(
   messages: Array<ChatCompletionRequestMessage>
 ): Promise<string> {
-  const latestMessage = messages.pop();
+  const latestMessage = messages.pop()!; // We are assuming the array is never empty.
 
-  if (await isTextFlagged(latestMessage!.content)) {
+  if (await isTextFlagged(latestMessage.content)) {
     throw new Error('Your message has been blocked by moderation.');
   }
 
-  const chatMessages = [
-    {
-      role: 'system',
-      content: config.bot.instructions,
-    },
-    ...(await getModeratedChatMessages(messages)),
-    latestMessage,
-  ] as Array<ChatCompletionRequestMessage>;
+  const systemMessage = {
+    role: 'system',
+    content: config.bot.instructions,
+  } as ChatCompletionRequestMessage;
 
-  const input = chatMessages.map((message) => message.content).join('\n');
+  const moderatedMessages = await getModeratedChatMessages(messages);
 
-  if (encode(input).length > config.openai.max_tokens) {
+  const chatMessages = [systemMessage, ...moderatedMessages, latestMessage];
+
+  const text = chatMessages.map((message) => message.content).join('\n'); // Do we need to line break or add a space?
+  const encodedText = encode(text);
+
+  if (encodedText.length > config.openai.max_tokens) {
+    // We can go above and beyond by checking if `/chat` works in the current channel.
     throw new Error(
       'The request has exceeded the token limit! Try again with a shorter message or start another conversation via the `/chat` command.'
     );

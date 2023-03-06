@@ -21,6 +21,17 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         ],
     },
     execute: async (interaction) => {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        const message = interaction.options.getString('message')?.trim();
+        if (!message || message.length === 0) {
+            await interaction.reply({
+                content: 'You must provide a message to start a conversation!',
+                ephemeral: true,
+            });
+            return;
+        }
         const channel = interaction.channel;
         if (!channel) {
             await interaction.reply({
@@ -29,66 +40,37 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
-        if (channel.isThread()) {
+        if (!(channel instanceof discord_js_1.TextChannel)) {
             await interaction.reply({
-                content: "You can't start a conversation in a thread!",
+                content: "You can't start a conversation here!",
                 ephemeral: true,
             });
             return;
         }
-        else if (channel.isDMBased()) {
-            await interaction.reply({
-                content: "You can't start a conversation in a DM!",
-                ephemeral: true,
-            });
-            return;
-        }
-        const message = interaction.options.getString('message');
-        if (!message || message.length === 0) {
-            await interaction.reply({
-                content: 'You must provide a message to start a conversation!',
-                ephemeral: true,
-            });
-            return;
-        }
-        const user = interaction.user;
-        const embed = new discord_js_1.EmbedBuilder()
-            .setColor(discord_js_1.Colors.Green)
-            .setDescription(`<@${user.id}> has started a conversation! 💬`)
-            .setFields([
-            { name: 'Message', value: message },
-            { name: 'Thread', value: 'Creating...' },
-        ]);
-        await interaction.reply({ embeds: [embed] });
+        await interaction.reply({
+            embeds: [getThreadCreatingEmbed(interaction.user, message)],
+        });
         let response = null;
         try {
             response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }]);
         }
         catch (err) {
             if (err instanceof Error) {
-                const isFlagged = err.message.includes('moderation');
+                const isModerated = err.message.includes('moderation');
                 await interaction.editReply({
                     embeds: [
-                        new discord_js_1.EmbedBuilder()
-                            .setColor(isFlagged ? discord_js_1.Colors.DarkRed : discord_js_1.Colors.Orange)
-                            .setTitle(isFlagged
-                            ? 'Your message has been blocked by moderation.'
-                            : 'There was an error while creating a thread.')
-                            .setDescription(`<@${user.id}> has started a conversation! 💬`)
-                            .addFields({
-                            name: 'Message',
-                            value: isFlagged ? 'REDACTED' : message,
-                        }),
+                        isModerated
+                            ? getModeratedEmbed(interaction.user, message)
+                            : getErrorEmbed(interaction.user, message),
                     ],
                 });
+                return;
             }
-        }
-        if (!response) {
-            return;
+            throw err;
         }
         try {
             const thread = await channel.threads.create({
-                name: `💬 ${user.username} - ${(0, helpers_1.limit)(message, 50)}`,
+                name: `💬 ${interaction.user.username} - ${(0, helpers_1.limit)(message, 50)}`,
                 autoArchiveDuration: 60,
                 reason: config_1.default.bot.name,
                 rateLimitPerUser: 1,
@@ -104,32 +86,49 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 });
             }
             catch (err) {
-                await (await thread.fetchStarterMessage())?.delete();
-                await thread.delete();
+                await (0, helpers_1.destroyThread)(thread);
                 throw err;
             }
-            await thread.members.add(user);
+            await thread.members.add(interaction.user);
             await thread.send(response);
             await interaction.editReply({
-                embeds: [
-                    embed.setFields([
-                        { name: 'Message', value: message },
-                        { name: 'Thread', value: thread.toString() },
-                    ]),
-                ],
+                embeds: [getThreadCreatedEmbed(interaction.user, message, thread)],
             });
         }
         catch (err) {
             console.error(err);
             await interaction.editReply({
-                embeds: [
-                    new discord_js_1.EmbedBuilder()
-                        .setColor(discord_js_1.Colors.Red)
-                        .setTitle('There was an error while creating a thread.')
-                        .setDescription(`<@${user.id}> has started a conversation! 💬`)
-                        .addFields({ name: 'Message', value: message }),
-                ],
+                embeds: [getErrorEmbed(interaction.user, message)],
             });
         }
     },
 });
+function getBaseEmbed(user, message) {
+    return new discord_js_1.EmbedBuilder()
+        .setColor(discord_js_1.Colors.Green)
+        .setDescription(`<@${user.id}> has started a conversation! 💬`)
+        .setFields({ name: 'Message', value: message });
+}
+function getThreadCreatingEmbed(user, message) {
+    return getBaseEmbed(user, message).addFields({
+        name: 'Thread',
+        value: 'Creating...',
+    });
+}
+function getThreadCreatedEmbed(user, message, thread) {
+    return getBaseEmbed(user, message).addFields({
+        name: 'Thread',
+        value: thread.toString(),
+    });
+}
+function getModeratedEmbed(user, message) {
+    return getBaseEmbed(user, message)
+        .setColor(discord_js_1.Colors.DarkRed)
+        .setTitle('Your message has been blocked by moderation.')
+        .setFields({ name: 'Message', value: 'REDACTED' });
+}
+function getErrorEmbed(user, message) {
+    return getBaseEmbed(user, message)
+        .setColor(discord_js_1.Colors.Red)
+        .setTitle('There was an error while creating a thread.');
+}

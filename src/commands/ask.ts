@@ -1,8 +1,5 @@
 import { DiscordCommand } from 'discord-module-loader';
-import {
-  ApplicationCommandOptionType,
-  ChatInputCommandInteraction,
-} from 'discord.js';
+import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
 import { getChatResponse } from '@/lib/openai';
 
@@ -19,8 +16,12 @@ export default new DiscordCommand({
       },
     ],
   },
-  execute: async (interaction: ChatInputCommandInteraction) => {
-    const message = interaction.options.getString('message');
+  execute: async (interaction: Interaction) => {
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
+
+    const message = interaction.options.getString('message')?.trim();
 
     if (!message || message.length === 0) {
       await interaction.reply({
@@ -40,9 +41,11 @@ export default new DiscordCommand({
 
       await interaction.editReply(response);
     } catch (err) {
-      if (err instanceof Error) {
-        await interaction.editReply(err.message);
-      }
+      await interaction.editReply(
+        err instanceof Error
+          ? err.message
+          : 'There was an error while processing your response.'
+      );
     }
   },
 });

@@ -6,21 +6,7 @@ const discord_js_1 = require("discord.js");
 const config_1 = tslib_1.__importDefault(require("../config"));
 const openai_1 = require("../lib/openai");
 const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
-async function handleDirectMessage(client, channel, message) {
-    await channel.sendTyping();
-    try {
-        const response = await (0, openai_1.getChatResponse)([
-            { role: 'user', content: message.content },
-        ]);
-        await channel.send(response);
-    }
-    catch (err) {
-        if (err instanceof Error) {
-            await message.reply(err.message);
-        }
-    }
-}
-async function handleChatMessage(client, channel, message) {
+async function handleThreadMessage(client, channel, message) {
     if (channel.ownerId !== client.user.id) {
         return;
     }
@@ -29,6 +15,7 @@ async function handleChatMessage(client, channel, message) {
     }
     await channel.sendTyping();
     const messages = await channel.messages.fetch();
+    const latestMessage = messages.first();
     const parsedMessages = messages
         .filter((message) => message.content)
         .map((message) => {
@@ -44,7 +31,7 @@ async function handleChatMessage(client, channel, message) {
     }
     catch (err) {
         if (err instanceof Error) {
-            await messages.first()?.reply(err.message);
+            await latestMessage?.reply(err.message);
             const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
             if (err.message.includes('token') && pruneInterval > 0) {
                 const conversation = await conversation_1.default.findOne({
@@ -58,6 +45,23 @@ async function handleChatMessage(client, channel, message) {
                 });
             }
         }
+        else {
+            await latestMessage?.reply('There was an error while processing your response.');
+        }
+    }
+}
+async function handleDirectMessage(client, channel, message) {
+    await channel.sendTyping();
+    try {
+        const response = await (0, openai_1.getChatResponse)([
+            { role: 'user', content: message.content },
+        ]);
+        await channel.send(response);
+    }
+    catch (err) {
+        await message.reply(err instanceof Error
+            ? err.message
+            : 'There was an error while processing your response.');
     }
 }
 exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.MessageCreate, async (message) => {
@@ -67,7 +71,7 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.M
     }
     const channel = message.channel;
     if (channel.isThread()) {
-        handleChatMessage(client, channel, message);
+        handleThreadMessage(client, channel, message);
     }
     else if (channel.isDMBased()) {
         handleDirectMessage(client, channel, message);

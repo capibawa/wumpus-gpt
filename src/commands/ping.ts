@@ -1,12 +1,16 @@
 import { DiscordCommand } from 'discord-module-loader';
-import { ChatInputCommandInteraction } from 'discord.js';
+import { Interaction } from 'discord.js';
 
 export default new DiscordCommand({
   command: {
     name: 'ping',
     description: 'Replies with Pong!',
   },
-  execute: async (interaction: ChatInputCommandInteraction) => {
+  execute: async (interaction: Interaction) => {
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
+
     await interaction.reply('Pong!');
   },
 });

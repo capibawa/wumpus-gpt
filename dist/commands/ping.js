@@ -7,6 +7,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         description: 'Replies with Pong!',
     },
     execute: async (interaction) => {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
         await interaction.reply('Pong!');
     },
 });

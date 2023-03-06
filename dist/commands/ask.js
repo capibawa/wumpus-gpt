@@ -17,7 +17,10 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         ],
     },
     execute: async (interaction) => {
-        const message = interaction.options.getString('message');
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+        const message = interaction.options.getString('message')?.trim();
         if (!message || message.length === 0) {
             await interaction.reply({
                 content: 'You must provide a message to start a conversation!',
@@ -33,9 +36,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             await interaction.editReply(response);
         }
         catch (err) {
-            if (err instanceof Error) {
-                await interaction.editReply(err.message);
-            }
+            await interaction.editReply(err instanceof Error
+                ? err.message
+                : 'There was an error while processing your response.');
         }
     },
 });

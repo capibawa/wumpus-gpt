@@ -7,6 +7,7 @@ const path_1 = tslib_1.__importDefault(require("path"));
 const sequelize_1 = require("sequelize");
 const toad_scheduler_1 = require("toad-scheduler");
 const config_1 = tslib_1.__importDefault(require("./config"));
+const helpers_1 = require("./lib/helpers");
 const sequelize_2 = tslib_1.__importDefault(require("./lib/sequelize"));
 const conversation_1 = tslib_1.__importDefault(require("./models/conversation"));
 const client = new discord_js_1.Client({
@@ -64,18 +65,17 @@ client.on('ready', async () => {
                     const interaction = await thread.parent?.messages.fetch(conversation.get('interactionId'));
                     if (interaction && interaction.embeds.length > 0) {
                         const embed = interaction.embeds[0];
-                        await interaction?.edit({
+                        await interaction.edit({
                             embeds: [
                                 new discord_js_1.EmbedBuilder()
                                     .setColor(discord_js_1.Colors.Yellow)
                                     .setTitle('Conversation deleted due to inactivity.')
                                     .setDescription(embed.description)
-                                    .addFields(embed.fields),
+                                    .setFields(embed.fields[0]),
                             ],
                         });
                     }
-                    await (await thread.fetchStarterMessage())?.delete();
-                    await thread.delete();
+                    await (0, helpers_1.destroyThread)(thread);
                 }
                 await conversation.destroy();
             }

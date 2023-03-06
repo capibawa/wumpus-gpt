@@ -12,16 +12,15 @@ async function getChatResponse(messages) {
     if (await isTextFlagged(latestMessage.content)) {
         throw new Error('Your message has been blocked by moderation.');
     }
-    const chatMessages = [
-        {
-            role: 'system',
-            content: config_1.default.bot.instructions,
-        },
-        ...(await getModeratedChatMessages(messages)),
-        latestMessage,
-    ];
-    const input = chatMessages.map((message) => message.content).join('\n');
-    if ((0, gpt_3_encoder_1.encode)(input).length > config_1.default.openai.max_tokens) {
+    const systemMessage = {
+        role: 'system',
+        content: config_1.default.bot.instructions,
+    };
+    const moderatedMessages = await getModeratedChatMessages(messages);
+    const chatMessages = [systemMessage, ...moderatedMessages, latestMessage];
+    const text = chatMessages.map((message) => message.content).join('\n');
+    const encodedText = (0, gpt_3_encoder_1.encode)(text);
+    if (encodedText.length > config_1.default.openai.max_tokens) {
         throw new Error('The request has exceeded the token limit! Try again with a shorter message or start another conversation via the `/chat` command.');
     }
     try {

@@ -6,28 +6,7 @@ import config from '@/config';
 import { getChatResponse } from '@/lib/openai';
 import Conversation from '@/models/conversation';
 
-// TODO: Retain previous messages with constraints (e.g. 10 messages max).
-async function handleDirectMessage(
-  client: Client<true>,
-  channel: DMChannel,
-  message: Message
-) {
-  await channel.sendTyping();
-
-  try {
-    const response = await getChatResponse([
-      { role: 'user', content: message.content },
-    ]);
-
-    await channel.send(response);
-  } catch (err) {
-    if (err instanceof Error) {
-      await message.reply(err.message);
-    }
-  }
-}
-
-async function handleChatMessage(
+async function handleThreadMessage(
   client: Client<true>,
   channel: ThreadChannel,
   message: Message
@@ -43,6 +22,7 @@ async function handleChatMessage(
   await channel.sendTyping();
 
   const messages = await channel.messages.fetch();
+  const latestMessage = messages.first();
 
   const parsedMessages = messages
     .filter((message) => message.content)
@@ -52,19 +32,18 @@ async function handleChatMessage(
         content: message.content,
       };
     })
-    .reverse();
+    .reverse() as Array<ChatCompletionRequestMessage>;
 
   try {
-    const response = await getChatResponse(
-      parsedMessages as Array<ChatCompletionRequestMessage>
-    );
+    const response = await getChatResponse(parsedMessages);
 
     await channel.send(response);
   } catch (err) {
     if (err instanceof Error) {
-      await messages.first()?.reply(err.message);
+      await latestMessage?.reply(err.message);
 
-      // Mark conversation as expired if the error is due to token limits.
+      // TODO: Delete the thread right away.
+      //       The automatic pruner will assume it is inactive.
       const pruneInterval = Math.ceil(config.bot.prune_interval as number);
 
       if (err.message.includes('token') && pruneInterval > 0) {
@@ -80,7 +59,34 @@ async function handleChatMessage(
           expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
         });
       }
+    } else {
+      await latestMessage?.reply(
+        'There was an error while processing your response.'
+      );
     }
+  }
+}
+
+// TODO: Retain previous messages with constraints (e.g. 10 messages max).
+async function handleDirectMessage(
+  client: Client<true>,
+  channel: DMChannel,
+  message: Message
+) {
+  await channel.sendTyping();
+
+  try {
+    const response = await getChatResponse([
+      { role: 'user', content: message.content },
+    ]);
+
+    await channel.send(response);
+  } catch (err) {
+    await message.reply(
+      err instanceof Error
+        ? err.message
+        : 'There was an error while processing your response.'
+    );
   }
 }
 
@@ -96,7 +102,7 @@ export default new DiscordEvent(
     const channel = message.channel;
 
     if (channel.isThread()) {
-      handleChatMessage(client, channel, message);
+      handleThreadMessage(client, channel, message);
     } else if (channel.isDMBased()) {
       handleDirectMessage(client, channel as DMChannel, message);
     }

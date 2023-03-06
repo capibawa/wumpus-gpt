@@ -13,6 +13,7 @@ import { Op } from 'sequelize';
 import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 
 import config from '@/config';
+import { destroyThread } from '@/lib/helpers';
 import sequelize from '@/lib/sequelize';
 import Conversation from '@/models/conversation';
 
@@ -93,19 +94,18 @@ client.on('ready', async () => {
             if (interaction && interaction.embeds.length > 0) {
               const embed = interaction.embeds[0];
 
-              await interaction?.edit({
+              await interaction.edit({
                 embeds: [
                   new EmbedBuilder()
                     .setColor(Colors.Yellow)
                     .setTitle('Conversation deleted due to inactivity.')
                     .setDescription(embed.description)
-                    .addFields(embed.fields),
+                    .setFields(embed.fields[0]),
                 ],
               });
             }
 
-            await (await thread.fetchStarterMessage())?.delete();
-            await thread.delete();
+            await destroyThread(thread);
           }
 
           await conversation.destroy();
