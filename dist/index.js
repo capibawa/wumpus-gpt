@@ -12,7 +12,6 @@ const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
         discord_js_1.GatewayIntentBits.GuildMessages,
-        discord_js_1.GatewayIntentBits.DirectMessages,
         discord_js_1.GatewayIntentBits.MessageContent,
     ],
     partials: [discord_js_1.Partials.Channel],
