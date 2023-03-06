@@ -2,9 +2,7 @@ import { DiscordEvent } from 'discord-module-loader';
 import { Client, DMChannel, Events, Message, ThreadChannel } from 'discord.js';
 import { ChatCompletionRequestMessage } from 'openai';
 
-import config from '@/config';
 import { getChatResponse } from '@/lib/openai';
-import Conversation from '@/models/conversation';
 
 async function handleThreadMessage(
   client: Client<true>,
@@ -42,22 +40,8 @@ async function handleThreadMessage(
     if (err instanceof Error) {
       await latestMessage?.reply(err.message);
 
-      // TODO: Delete the thread right away.
-      //       The automatic pruner will assume it is inactive.
-      const pruneInterval = Math.ceil(config.bot.prune_interval as number);
-
-      if (err.message.includes('token') && pruneInterval > 0) {
-        const conversation = await Conversation.findOne({
-          where: { threadId: channel.id },
-        });
-
-        if (!conversation || conversation.get('expiresAt')) {
-          return;
-        }
-
-        await conversation.update({
-          expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
-        });
+      if (err.message.includes('token')) {
+        // Do something here because the token limit has been reached.
       }
     } else {
       await latestMessage?.reply(

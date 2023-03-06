@@ -6,7 +6,7 @@ const discord_js_1 = require("discord.js");
 const config_1 = tslib_1.__importDefault(require("../config"));
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
-const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
+const prisma_1 = tslib_1.__importDefault(require("../lib/prisma"));
 const rate_limiter_1 = require("../lib/rate-limiter");
 const rateLimiter = new rate_limiter_1.RateLimiter(5, 900000);
 exports.default = new discord_module_loader_1.DiscordCommand({
@@ -78,19 +78,21 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 1,
                 });
-                try {
-                    const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
-                    await conversation_1.default.create({
-                        interactionId: (await interaction.fetchReply()).id,
-                        threadId: thread.id,
-                        expiresAt: pruneInterval > 0
-                            ? new Date(Date.now() + 3600000 * pruneInterval)
-                            : null,
-                    });
-                }
-                catch (err) {
-                    await (0, helpers_1.destroyThread)(thread);
-                    throw err;
+                const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
+                if (pruneInterval > 0) {
+                    try {
+                        await prisma_1.default.conversation.create({
+                            data: {
+                                interactionId: (await interaction.fetchReply()).id,
+                                channelId: thread.id,
+                                expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
+                            },
+                        });
+                    }
+                    catch (err) {
+                        await (0, helpers_1.destroyThread)(thread);
+                        throw err;
+                    }
                 }
                 await thread.members.add(interaction.user);
                 await thread.send(response);

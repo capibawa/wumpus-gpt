@@ -1,11 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
-const config_1 = tslib_1.__importDefault(require("../config"));
 const openai_1 = require("../lib/openai");
-const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
 async function handleThreadMessage(client, channel, message) {
     if (channel.ownerId !== client.user.id) {
         return;
@@ -32,17 +29,7 @@ async function handleThreadMessage(client, channel, message) {
     catch (err) {
         if (err instanceof Error) {
             await latestMessage?.reply(err.message);
-            const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
-            if (err.message.includes('token') && pruneInterval > 0) {
-                const conversation = await conversation_1.default.findOne({
-                    where: { threadId: channel.id },
-                });
-                if (!conversation || conversation.get('expiresAt')) {
-                    return;
-                }
-                await conversation.update({
-                    expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
-                });
+            if (err.message.includes('token')) {
             }
         }
         else {
