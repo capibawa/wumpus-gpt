@@ -8,9 +8,10 @@ import {
   ThreadChannel,
   User,
 } from 'discord.js';
+import truncate from 'lodash/truncate';
 
 import config from '@/config';
-import { destroyThread, limit } from '@/lib/helpers';
+import { destroyThread, exceedsTokenLimit } from '@/lib/helpers';
 import { getChatResponse } from '@/lib/openai';
 import prisma from '@/lib/prisma';
 import { RateLimiter } from '@/lib/rate-limiter';
@@ -46,6 +47,17 @@ export default new DiscordCommand({
 
       return;
     }
+
+    if (exceedsTokenLimit(message)) {
+      await interaction.reply({
+        content: 'Your message is too long, try shortening it!',
+        ephemeral: true,
+      });
+
+      return;
+    }
+
+    const truncatedMessage = truncate(message, { length: 50 });
 
     const channel = interaction.channel;
 
@@ -98,7 +110,7 @@ export default new DiscordCommand({
 
       try {
         const thread = await channel.threads.create({
-          name: `💬 ${interaction.user.username} - ${limit(message, 50)}`,
+          name: `💬 ${interaction.user.username} - ${truncatedMessage}`,
           autoArchiveDuration: 60,
           reason: config.bot.name,
           rateLimitPerUser: 1,

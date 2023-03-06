@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
+const truncate_1 = tslib_1.__importDefault(require("lodash/truncate"));
 const config_1 = tslib_1.__importDefault(require("../config"));
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
@@ -34,6 +35,14 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
+        if ((0, helpers_1.exceedsTokenLimit)(message)) {
+            await interaction.reply({
+                content: 'Your message is too long, try shortening it!',
+                ephemeral: true,
+            });
+            return;
+        }
+        const truncatedMessage = (0, truncate_1.default)(message, { length: 50 });
         const channel = interaction.channel;
         if (!channel) {
             await interaction.reply({
@@ -73,7 +82,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             }
             try {
                 const thread = await channel.threads.create({
-                    name: `💬 ${interaction.user.username} - ${(0, helpers_1.limit)(message, 50)}`,
+                    name: `💬 ${interaction.user.username} - ${truncatedMessage}`,
                     autoArchiveDuration: 60,
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 1,

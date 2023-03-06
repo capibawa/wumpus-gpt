@@ -1,4 +1,3 @@
-import { encode } from 'gpt-3-encoder';
 import {
   ChatCompletionRequestMessage,
   Configuration,
@@ -7,6 +6,7 @@ import {
 } from 'openai';
 
 import config from '@/config';
+import { exceedsTokenLimit } from '@/lib/helpers';
 
 const configuration = new Configuration({ apiKey: config.openai.api_key });
 const openai = new OpenAIApi(configuration);
@@ -30,10 +30,9 @@ export async function getChatResponse(
 
   const chatMessages = [systemMessage, ...moderatedMessages, latestMessage];
 
-  const text = chatMessages.map((message) => message.content).join('\n'); // Do we need to line break or add a space?
-  const encodedText = encode(text);
-
-  if (encodedText.length > config.openai.max_tokens) {
+  if (
+    exceedsTokenLimit(chatMessages.map((message) => message.content).join('\n')) // Do we need to line break or add a space?
+  ) {
     // We can go above and beyond by checking if `/chat` works in the current channel.
     throw new Error(
       'The request has exceeded the token limit! Try again with a shorter message or start another conversation via the `/chat` command.'

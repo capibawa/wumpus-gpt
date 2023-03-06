@@ -1,6 +1,7 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
+import { exceedsTokenLimit } from '@/lib/helpers';
 import { getChatResponse } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
@@ -30,6 +31,15 @@ export default new DiscordCommand({
     if (!message || message.length === 0) {
       await interaction.reply({
         content: 'You must provide a message to start a conversation!',
+        ephemeral: true,
+      });
+
+      return;
+    }
+
+    if (exceedsTokenLimit(message)) {
+      await interaction.reply({
+        content: 'Your message is too long, try shortening it!',
         ephemeral: true,
       });
 

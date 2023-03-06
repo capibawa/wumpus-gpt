@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isTextFlagged = exports.getModeratedChatMessages = exports.getChatResponse = void 0;
 const tslib_1 = require("tslib");
-const gpt_3_encoder_1 = require("gpt-3-encoder");
 const openai_1 = require("openai");
 const config_1 = tslib_1.__importDefault(require("../config"));
+const helpers_1 = require("../lib/helpers");
 const configuration = new openai_1.Configuration({ apiKey: config_1.default.openai.api_key });
 const openai = new openai_1.OpenAIApi(configuration);
 async function getChatResponse(messages) {
@@ -18,9 +18,7 @@ async function getChatResponse(messages) {
     };
     const moderatedMessages = await getModeratedChatMessages(messages);
     const chatMessages = [systemMessage, ...moderatedMessages, latestMessage];
-    const text = chatMessages.map((message) => message.content).join('\n');
-    const encodedText = (0, gpt_3_encoder_1.encode)(text);
-    if (encodedText.length > config_1.default.openai.max_tokens) {
+    if ((0, helpers_1.exceedsTokenLimit)(chatMessages.map((message) => message.content).join('\n'))) {
         throw new Error('The request has exceeded the token limit! Try again with a shorter message or start another conversation via the `/chat` command.');
     }
     try {
