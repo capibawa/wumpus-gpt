@@ -136,11 +136,11 @@ function getThreadCreatedEmbed(user, message, thread) {
 function getModeratedEmbed(user, message) {
     return getBaseEmbed(user, message)
         .setColor(discord_js_1.Colors.DarkRed)
-        .setTitle('Your message has been blocked by moderation.')
+        .setTitle('Your message has been blocked by moderation')
         .setFields({ name: 'Message', value: 'REDACTED' });
 }
 function getErrorEmbed(user, message) {
     return getBaseEmbed(user, message)
         .setColor(discord_js_1.Colors.Red)
-        .setTitle('There was an error while creating a thread.');
+        .setTitle('There was an error while creating a thread');
 }

@@ -58,7 +58,7 @@ client.on('ready', async () => {
                             embeds: [
                                 new discord_js_1.EmbedBuilder()
                                     .setColor(discord_js_1.Colors.Yellow)
-                                    .setTitle('Conversation deleted due to inactivity.')
+                                    .setTitle('Conversation deleted due to inactivity')
                                     .setDescription(embed.description)
                                     .setFields(embed.fields[0]),
                             ],

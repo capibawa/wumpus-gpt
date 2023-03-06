@@ -175,12 +175,12 @@ function getThreadCreatedEmbed(
 function getModeratedEmbed(user: User, message: string): EmbedBuilder {
   return getBaseEmbed(user, message)
     .setColor(Colors.DarkRed)
-    .setTitle('Your message has been blocked by moderation.')
+    .setTitle('Your message has been blocked by moderation')
     .setFields({ name: 'Message', value: 'REDACTED' });
 }
 
 function getErrorEmbed(user: User, message: string): EmbedBuilder {
   return getBaseEmbed(user, message)
     .setColor(Colors.Red)
-    .setTitle('There was an error while creating a thread.');
+    .setTitle('There was an error while creating a thread');
 }

@@ -83,7 +83,7 @@ client.on('ready', async () => {
                 embeds: [
                   new EmbedBuilder()
                     .setColor(Colors.Yellow)
-                    .setTitle('Conversation deleted due to inactivity.')
+                    .setTitle('Conversation deleted due to inactivity')
                     .setDescription(embed.description)
                     .setFields(embed.fields[0]),
                 ],
