@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
 const openai_1 = require("../lib/openai");
+const rate_limiter_1 = require("../lib/rate-limiter");
+const rateLimiter = new rate_limiter_1.RateLimiter(3, 'minute');
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
         name: 'ask',
@@ -28,17 +30,25 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
-        await interaction.deferReply();
-        try {
-            const response = await (0, openai_1.getChatResponse)([
-                { role: 'user', content: message },
-            ]);
-            await interaction.editReply(response);
-        }
-        catch (err) {
-            await interaction.editReply(err instanceof Error
-                ? err.message
-                : 'There was an error while processing your response.');
+        const executed = rateLimiter.attempt(interaction.user.id, async () => {
+            await interaction.deferReply();
+            try {
+                const response = await (0, openai_1.getChatResponse)([
+                    { role: 'user', content: message },
+                ]);
+                await interaction.editReply(response);
+            }
+            catch (err) {
+                await interaction.editReply(err instanceof Error
+                    ? err.message
+                    : 'There was an error while processing your response.');
+            }
+        });
+        if (!executed) {
+            await interaction.reply({
+                content: 'You are currently being rate limited.',
+                ephemeral: true,
+            });
         }
     },
 });

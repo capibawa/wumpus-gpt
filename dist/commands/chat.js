@@ -7,6 +7,8 @@ const config_1 = tslib_1.__importDefault(require("../config"));
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
+const rate_limiter_1 = require("../lib/rate-limiter");
+const rateLimiter = new rate_limiter_1.RateLimiter(5, 900000);
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
         name: 'chat',
@@ -47,58 +49,66 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
-        await interaction.reply({
-            embeds: [getThreadCreatingEmbed(interaction.user, message)],
-        });
-        let response = null;
-        try {
-            response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }]);
-        }
-        catch (err) {
-            if (err instanceof Error) {
-                const isModerated = err.message.includes('moderation');
-                await interaction.editReply({
-                    embeds: [
-                        isModerated
-                            ? getModeratedEmbed(interaction.user, message)
-                            : getErrorEmbed(interaction.user, message),
-                    ],
-                });
-                return;
-            }
-            throw err;
-        }
-        try {
-            const thread = await channel.threads.create({
-                name: `💬 ${interaction.user.username} - ${(0, helpers_1.limit)(message, 50)}`,
-                autoArchiveDuration: 60,
-                reason: config_1.default.bot.name,
-                rateLimitPerUser: 1,
+        const executed = rateLimiter.attempt(interaction.user.id, async () => {
+            await interaction.reply({
+                embeds: [getThreadCreatingEmbed(interaction.user, message)],
             });
+            let response = null;
             try {
-                const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
-                await conversation_1.default.create({
-                    interactionId: (await interaction.fetchReply()).id,
-                    threadId: thread.id,
-                    expiresAt: pruneInterval > 0
-                        ? new Date(Date.now() + 3600000 * pruneInterval)
-                        : null,
+                response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }]);
+            }
+            catch (err) {
+                if (err instanceof Error) {
+                    const isModerated = err.message.includes('moderation');
+                    await interaction.editReply({
+                        embeds: [
+                            isModerated
+                                ? getModeratedEmbed(interaction.user, message)
+                                : getErrorEmbed(interaction.user, message),
+                        ],
+                    });
+                    return;
+                }
+                throw err;
+            }
+            try {
+                const thread = await channel.threads.create({
+                    name: `💬 ${interaction.user.username} - ${(0, helpers_1.limit)(message, 50)}`,
+                    autoArchiveDuration: 60,
+                    reason: config_1.default.bot.name,
+                    rateLimitPerUser: 1,
+                });
+                try {
+                    const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
+                    await conversation_1.default.create({
+                        interactionId: (await interaction.fetchReply()).id,
+                        threadId: thread.id,
+                        expiresAt: pruneInterval > 0
+                            ? new Date(Date.now() + 3600000 * pruneInterval)
+                            : null,
+                    });
+                }
+                catch (err) {
+                    await (0, helpers_1.destroyThread)(thread);
+                    throw err;
+                }
+                await thread.members.add(interaction.user);
+                await thread.send(response);
+                await interaction.editReply({
+                    embeds: [getThreadCreatedEmbed(interaction.user, message, thread)],
                 });
             }
             catch (err) {
-                await (0, helpers_1.destroyThread)(thread);
-                throw err;
+                console.error(err);
+                await interaction.editReply({
+                    embeds: [getErrorEmbed(interaction.user, message)],
+                });
             }
-            await thread.members.add(interaction.user);
-            await thread.send(response);
-            await interaction.editReply({
-                embeds: [getThreadCreatedEmbed(interaction.user, message, thread)],
-            });
-        }
-        catch (err) {
-            console.error(err);
-            await interaction.editReply({
-                embeds: [getErrorEmbed(interaction.user, message)],
+        });
+        if (!executed) {
+            await interaction.reply({
+                content: 'You are currently being rate limited.',
+                ephemeral: true,
             });
         }
     },
