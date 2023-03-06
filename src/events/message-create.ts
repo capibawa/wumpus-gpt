@@ -20,7 +20,14 @@ async function handleThreadMessage(
   await channel.sendTyping();
 
   const messages = await channel.messages.fetch();
-  const latestMessage = messages.first();
+
+  const firstMessage = messages.last();
+  const lastMessage = messages.first();
+
+  // TODO: Improve behavior detection.
+  const behavior = firstMessage?.content?.includes('Behavior: ')
+    ? firstMessage.content.split('Behavior: ')[1]
+    : undefined;
 
   const parsedMessages = messages
     .filter((message) => message.content)
@@ -29,22 +36,25 @@ async function handleThreadMessage(
         role: message.author.id === client.user.id ? 'assistant' : 'user',
         content: message.content,
       };
-    })
-    .reverse() as Array<ChatCompletionRequestMessage>;
+    }) as Array<ChatCompletionRequestMessage>;
+
+  if (behavior) {
+    parsedMessages.pop();
+  }
 
   try {
-    const response = await getChatResponse(parsedMessages);
+    const response = await getChatResponse(parsedMessages.reverse(), behavior);
 
     await channel.send(response);
   } catch (err) {
     if (err instanceof Error) {
-      await latestMessage?.reply(err.message);
+      await lastMessage?.reply(err.message);
 
       if (err.message.includes('token')) {
         // Do something here because the token limit has been reached.
       }
     } else {
-      await latestMessage?.reply(
+      await lastMessage?.reply(
         'There was an error while processing your response.'
       );
     }

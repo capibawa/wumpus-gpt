@@ -15,7 +15,8 @@ const openai = new OpenAIApi(configuration);
 
 // TODO: Better error handling
 export async function getChatResponse(
-  messages: Array<ChatCompletionRequestMessage>
+  messages: Array<ChatCompletionRequestMessage>,
+  behavior?: string
 ): Promise<string> {
   const latestMessage = messages.pop()!; // We are assuming the array is never empty.
 
@@ -26,7 +27,7 @@ export async function getChatResponse(
   const systemMessage = {
     role: 'system',
     content:
-      config.bot.instructions +
+      (behavior || config.bot.instructions) +
       ` The current date is ${format(new Date(), 'PPP')}.`,
   } as ChatCompletionRequestMessage;
 

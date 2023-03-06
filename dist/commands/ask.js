@@ -17,6 +17,11 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 description: 'The message to say to the bot.',
                 required: true,
             },
+            {
+                type: discord_js_1.ApplicationCommandOptionType.String,
+                name: 'behavior',
+                description: 'Specify how the bot should behave.',
+            },
         ],
     },
     execute: async (interaction) => {
@@ -38,12 +43,18 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
+        const behavior = interaction.options.getString('behavior')?.trim();
+        if (behavior && (await (0, openai_1.isTextFlagged)(behavior))) {
+            await interaction.reply({
+                content: 'Your behavior has been blocked by moderation!',
+                ephemeral: true,
+            });
+            return;
+        }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
             try {
-                const response = await (0, openai_1.getChatResponse)([
-                    { role: 'user', content: message },
-                ]);
+                const response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }], behavior);
                 await interaction.editReply(response);
             }
             catch (err) {

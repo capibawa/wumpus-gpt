@@ -67,19 +67,17 @@ client.on('ready', async () => {
         });
 
         for (const conversation of conversations) {
-          const channel = await client.channels.cache.get(
-            conversation.channelId
-          );
+          const channel = client.channels.cache.get(conversation.channelId);
 
           if (channel && channel.isThread()) {
-            const interaction = await channel.parent?.messages.fetch(
+            const message = await channel.parent?.messages.fetch(
               conversation.interactionId
             );
 
-            if (interaction && interaction.embeds.length > 0) {
-              const embed = interaction.embeds[0];
+            if (message && message.embeds.length > 0) {
+              const embed = message.embeds[0];
 
-              await interaction.edit({
+              await message.edit({
                 embeds: [
                   new EmbedBuilder()
                     .setColor(Colors.Yellow)

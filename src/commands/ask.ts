@@ -2,7 +2,7 @@ import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
 import { exceedsTokenLimit } from '@/lib/helpers';
-import { getChatResponse } from '@/lib/openai';
+import { getChatResponse, isTextFlagged } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(5, 'minute');
@@ -17,6 +17,11 @@ export default new DiscordCommand({
         name: 'message',
         description: 'The message to say to the bot.',
         required: true,
+      },
+      {
+        type: ApplicationCommandOptionType.String,
+        name: 'behavior',
+        description: 'Specify how the bot should behave.',
       },
     ],
   },
@@ -45,13 +50,25 @@ export default new DiscordCommand({
       return;
     }
 
+    const behavior = interaction.options.getString('behavior')?.trim();
+
+    if (behavior && (await isTextFlagged(behavior))) {
+      await interaction.reply({
+        content: 'Your behavior has been blocked by moderation!',
+        ephemeral: true,
+      });
+
+      return;
+    }
+
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.deferReply();
 
       try {
-        const response = await getChatResponse([
-          { role: 'user', content: message },
-        ]);
+        const response = await getChatResponse(
+          [{ role: 'user', content: message }],
+          behavior
+        );
 
         await interaction.editReply(response);
       } catch (err) {

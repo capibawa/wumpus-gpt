@@ -1,5 +1,6 @@
 import { DiscordCommand } from 'discord-module-loader';
 import {
+  APIEmbedField,
   ApplicationCommandOptionType,
   Colors,
   EmbedBuilder,
@@ -12,7 +13,7 @@ import truncate from 'lodash/truncate';
 
 import config from '@/config';
 import { destroyThread, exceedsTokenLimit } from '@/lib/helpers';
-import { getChatResponse } from '@/lib/openai';
+import { getChatResponse, isTextFlagged } from '@/lib/openai';
 import prisma from '@/lib/prisma';
 import { RateLimiter } from '@/lib/rate-limiter';
 
@@ -29,6 +30,11 @@ export default new DiscordCommand({
         name: 'message',
         description: 'The message to start the conversation with.',
         required: true,
+      },
+      {
+        type: ApplicationCommandOptionType.String,
+        name: 'behavior',
+        description: 'Specify how the bot should behave.',
       },
     ],
   },
@@ -57,6 +63,17 @@ export default new DiscordCommand({
       return;
     }
 
+    const behavior = interaction.options.getString('behavior')?.trim();
+
+    if (behavior && (await isTextFlagged(behavior))) {
+      await interaction.reply({
+        content: 'Your behavior has been blocked by moderation!',
+        ephemeral: true,
+      });
+
+      return;
+    }
+
     const channel = interaction.channel;
 
     if (!channel) {
@@ -79,14 +96,17 @@ export default new DiscordCommand({
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.reply({
-        embeds: [getThreadCreatingEmbed(interaction.user, message)],
+        embeds: [getThreadCreatingEmbed(interaction.user, message, behavior)],
       });
 
       let response = null;
 
       try {
         // TODO: Proper error handling.
-        response = await getChatResponse([{ role: 'user', content: message }]);
+        response = await getChatResponse(
+          [{ role: 'user', content: message }],
+          behavior
+        );
       } catch (err) {
         if (err instanceof Error) {
           // We wouldn't need to do this if `getChatResponse` had proper error handling.
@@ -95,8 +115,8 @@ export default new DiscordCommand({
           await interaction.editReply({
             embeds: [
               isModerated
-                ? getModeratedEmbed(interaction.user, message)
-                : getErrorEmbed(interaction.user, message),
+                ? getModeratedEmbed(interaction.user, message, behavior)
+                : getErrorEmbed(interaction.user, message, behavior),
             ],
           });
 
@@ -134,18 +154,25 @@ export default new DiscordCommand({
           }
         }
 
+        if (behavior) {
+          await thread.send(`Behavior: ${behavior}`);
+        }
+
+        // Note: This also sends a message to the thread.
         await thread.members.add(interaction.user);
 
         await thread.send(response);
 
         await interaction.editReply({
-          embeds: [getThreadCreatedEmbed(interaction.user, message, thread)],
+          embeds: [
+            getThreadCreatedEmbed(thread, interaction.user, message, behavior),
+          ],
         });
       } catch (err) {
         console.error(err);
 
         await interaction.editReply({
-          embeds: [getErrorEmbed(interaction.user, message)],
+          embeds: [getErrorEmbed(interaction.user, message, behavior)],
         });
       }
     });
@@ -159,40 +186,62 @@ export default new DiscordCommand({
   },
 });
 
-function getBaseEmbed(user: User, message: string) {
+function getBaseEmbed(
+  user: User,
+  message: string,
+  behavior?: string
+): EmbedBuilder {
+  const fields: Array<APIEmbedField> = [{ name: 'Message', value: message }];
+
+  if (behavior) {
+    fields.push({ name: 'Behavior', value: behavior });
+  }
+
   return new EmbedBuilder()
     .setColor(Colors.Green)
     .setDescription(`<@${user.id}> has started a conversation! 💬`)
-    .setFields({ name: 'Message', value: message });
+    .setFields(fields);
 }
 
-function getThreadCreatingEmbed(user: User, message: string): EmbedBuilder {
-  return getBaseEmbed(user, message).addFields({
+function getThreadCreatingEmbed(
+  user: User,
+  message: string,
+  behavior?: string
+): EmbedBuilder {
+  return getBaseEmbed(user, message, behavior).addFields({
     name: 'Thread',
     value: 'Creating...',
   });
 }
 
 function getThreadCreatedEmbed(
+  thread: ThreadChannel,
   user: User,
   message: string,
-  thread: ThreadChannel
+  behavior?: string
 ): EmbedBuilder {
-  return getBaseEmbed(user, message).addFields({
+  return getBaseEmbed(user, message, behavior).addFields({
     name: 'Thread',
     value: thread.toString(),
   });
 }
 
-function getModeratedEmbed(user: User, message: string): EmbedBuilder {
-  return getBaseEmbed(user, message)
+function getModeratedEmbed(
+  user: User,
+  message: string,
+  behavior?: string
+): EmbedBuilder {
+  return getBaseEmbed(user, message, behavior)
     .setColor(Colors.DarkRed)
-    .setTitle('Your message has been blocked by moderation')
-    .setFields({ name: 'Message', value: 'REDACTED' });
+    .setTitle('Your message has been blocked by moderation');
 }
 
-function getErrorEmbed(user: User, message: string): EmbedBuilder {
-  return getBaseEmbed(user, message)
+function getErrorEmbed(
+  user: User,
+  message: string,
+  behavior?: string
+): EmbedBuilder {
+  return getBaseEmbed(user, message, behavior)
     .setColor(Colors.Red)
     .setTitle('There was an error while creating a thread');
 }

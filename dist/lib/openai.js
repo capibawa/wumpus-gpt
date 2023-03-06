@@ -9,14 +9,14 @@ const config_1 = tslib_1.__importDefault(require("../config"));
 const helpers_1 = require("../lib/helpers");
 const configuration = new openai_1.Configuration({ apiKey: config_1.default.openai.api_key });
 const openai = new openai_1.OpenAIApi(configuration);
-async function getChatResponse(messages) {
+async function getChatResponse(messages, behavior) {
     const latestMessage = messages.pop();
     if (await isTextFlagged(latestMessage.content)) {
         throw new Error('Your message has been blocked by moderation.');
     }
     const systemMessage = {
         role: 'system',
-        content: config_1.default.bot.instructions +
+        content: (behavior || config_1.default.bot.instructions) +
             ` The current date is ${(0, format_1.default)(new Date(), 'PPP')}.`,
     };
     const moderatedMessages = await getModeratedChatMessages(messages);

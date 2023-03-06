@@ -12,7 +12,11 @@ async function handleThreadMessage(client, channel, message) {
     }
     await channel.sendTyping();
     const messages = await channel.messages.fetch();
-    const latestMessage = messages.first();
+    const firstMessage = messages.last();
+    const lastMessage = messages.first();
+    const behavior = firstMessage?.content?.includes('Behavior: ')
+        ? firstMessage.content.split('Behavior: ')[1]
+        : undefined;
     const parsedMessages = messages
         .filter((message) => message.content)
         .map((message) => {
@@ -20,20 +24,22 @@ async function handleThreadMessage(client, channel, message) {
             role: message.author.id === client.user.id ? 'assistant' : 'user',
             content: message.content,
         };
-    })
-        .reverse();
+    });
+    if (behavior) {
+        parsedMessages.pop();
+    }
     try {
-        const response = await (0, openai_1.getChatResponse)(parsedMessages);
+        const response = await (0, openai_1.getChatResponse)(parsedMessages.reverse(), behavior);
         await channel.send(response);
     }
     catch (err) {
         if (err instanceof Error) {
-            await latestMessage?.reply(err.message);
+            await lastMessage?.reply(err.message);
             if (err.message.includes('token')) {
             }
         }
         else {
-            await latestMessage?.reply('There was an error while processing your response.');
+            await lastMessage?.reply('There was an error while processing your response.');
         }
     }
 }
