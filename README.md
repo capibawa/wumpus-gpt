@@ -40,10 +40,17 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 1. Install dependencies and run the bot
     ```
     npm install
+
+    # If you are using PlanetScale:
+    npx prisma db push
+
+    # Otherwise:
+    npx prisma migrate dev --name init
+
     npm start
     ```
     You should see an invite URL in the console. Copy and paste it into your browser to add the bot to your server.
-1. Start chatting with the bot via the `/chat` or `/ask` commands or by sending a DM!
+1. Start chatting with the bot via the `/chat` or `/ask` commands
 
 ## License
 
