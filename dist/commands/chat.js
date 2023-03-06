@@ -42,7 +42,6 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
-        const truncatedMessage = (0, truncate_1.default)(message, { length: 50 });
         const channel = interaction.channel;
         if (!channel) {
             await interaction.reply({
@@ -82,7 +81,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             }
             try {
                 const thread = await channel.threads.create({
-                    name: `💬 ${interaction.user.username} - ${truncatedMessage}`,
+                    name: (0, truncate_1.default)(`💬 ${interaction.user.username} - ${message}`, {
+                        length: 100,
+                    }),
                     autoArchiveDuration: 60,
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 1,

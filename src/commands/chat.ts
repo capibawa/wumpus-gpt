@@ -57,8 +57,6 @@ export default new DiscordCommand({
       return;
     }
 
-    const truncatedMessage = truncate(message, { length: 50 });
-
     const channel = interaction.channel;
 
     if (!channel) {
@@ -110,7 +108,9 @@ export default new DiscordCommand({
 
       try {
         const thread = await channel.threads.create({
-          name: `💬 ${interaction.user.username} - ${truncatedMessage}`,
+          name: truncate(`💬 ${interaction.user.username} - ${message}`, {
+            length: 100,
+          }),
           autoArchiveDuration: 60,
           reason: config.bot.name,
           rateLimitPerUser: 1,
