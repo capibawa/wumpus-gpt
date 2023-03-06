@@ -1,3 +1,4 @@
+import axios from 'axios';
 import format from 'date-fns/format';
 import {
   ChatCompletionRequestMessage,
@@ -59,7 +60,7 @@ export async function getChatResponse(
       return message.content;
     }
   } catch (err) {
-    console.error(err);
+    logError(err);
   }
 
   throw new Error('There was an error while processing a response.');
@@ -111,7 +112,7 @@ export async function createImage(prompt: string): Promise<string> {
 
     imageUrl = image.data.data[0].url || '';
   } catch (err) {
-    console.error(err);
+    logError(err);
   }
 
   return imageUrl;
@@ -120,15 +121,30 @@ export async function createImage(prompt: string): Promise<string> {
 export async function isTextFlagged(
   input: CreateModerationRequestInput
 ): Promise<boolean> {
+  let flagged = false;
+
   try {
     const moderation = await openai.createModeration({
       input,
     });
 
-    return moderation.data.results[0].flagged;
+    flagged = moderation.data.results[0].flagged;
   } catch (err) {
-    console.error(err);
+    logError(err);
   }
 
-  return false;
+  return flagged;
+}
+
+function logError(err: unknown): void {
+  if (axios.isAxiosError(err)) {
+    if (err.response) {
+      console.log(err.response.status);
+      console.log(err.response.data);
+    } else {
+      console.log(err.message);
+    }
+  } else {
+    console.log(err);
+  }
 }

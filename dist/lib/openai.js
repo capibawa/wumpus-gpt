@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isTextFlagged = exports.createImage = exports.getModeratedChatMessages = exports.getChatResponse = void 0;
 const tslib_1 = require("tslib");
+const axios_1 = tslib_1.__importDefault(require("axios"));
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const openai_1 = require("openai");
 const config_1 = tslib_1.__importDefault(require("../config"));
@@ -39,7 +40,7 @@ async function getChatResponse(messages) {
         }
     }
     catch (err) {
-        console.error(err);
+        logError(err);
     }
     throw new Error('There was an error while processing a response.');
 }
@@ -75,21 +76,36 @@ async function createImage(prompt) {
         imageUrl = image.data.data[0].url || '';
     }
     catch (err) {
-        console.error(err);
+        logError(err);
     }
     return imageUrl;
 }
 exports.createImage = createImage;
 async function isTextFlagged(input) {
+    let flagged = false;
     try {
         const moderation = await openai.createModeration({
             input,
         });
-        return moderation.data.results[0].flagged;
+        flagged = moderation.data.results[0].flagged;
     }
     catch (err) {
-        console.error(err);
+        logError(err);
     }
-    return false;
+    return flagged;
 }
 exports.isTextFlagged = isTextFlagged;
+function logError(err) {
+    if (axios_1.default.isAxiosError(err)) {
+        if (err.response) {
+            console.log(err.response.status);
+            console.log(err.response.data);
+        }
+        else {
+            console.log(err.message);
+        }
+    }
+    else {
+        console.log(err);
+    }
+}
