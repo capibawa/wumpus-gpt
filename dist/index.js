@@ -4,12 +4,10 @@ const tslib_1 = require("tslib");
 const discord_module_loader_1 = tslib_1.__importDefault(require("discord-module-loader"));
 const discord_js_1 = require("discord.js");
 const path_1 = tslib_1.__importDefault(require("path"));
-const sequelize_1 = require("sequelize");
 const toad_scheduler_1 = require("toad-scheduler");
 const config_1 = tslib_1.__importDefault(require("./config"));
 const helpers_1 = require("./lib/helpers");
-const sequelize_2 = tslib_1.__importDefault(require("./lib/sequelize"));
-const conversation_1 = tslib_1.__importDefault(require("./models/conversation"));
+const prisma_1 = tslib_1.__importDefault(require("./lib/prisma"));
 const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
@@ -26,14 +24,6 @@ client.on('ready', async () => {
         return;
     }
     try {
-        await sequelize_2.default.authenticate();
-        await conversation_1.default.sync();
-    }
-    catch (err) {
-        console.error('Unable to connect to the database:', err);
-        process.exit(1);
-    }
-    try {
         const isTsNode = process.argv[0].includes('ts-node');
         if (isTsNode) {
             require('./load-modules');
@@ -47,22 +37,22 @@ client.on('ready', async () => {
     }
     catch (err) {
         console.error(err);
+        await prisma_1.default.$disconnect();
         process.exit(1);
     }
     const task = new toad_scheduler_1.AsyncTask('prune-conversations', async () => {
         try {
-            const conversations = await conversation_1.default.findAll({
+            const conversations = await prisma_1.default.conversation.findMany({
                 where: {
                     expiresAt: {
-                        [sequelize_1.Op.ne]: null,
-                        [sequelize_1.Op.lt]: new Date(),
+                        lte: new Date(),
                     },
                 },
             });
             for (const conversation of conversations) {
-                const thread = (await client.channels.cache.get(conversation.get('threadId')));
-                if (thread) {
-                    const interaction = await thread.parent?.messages.fetch(conversation.get('interactionId'));
+                const channel = await client.channels.cache.get(conversation.channelId);
+                if (channel && channel.isThread()) {
+                    const interaction = await channel.parent?.messages.fetch(conversation.interactionId);
                     if (interaction && interaction.embeds.length > 0) {
                         const embed = interaction.embeds[0];
                         await interaction.edit({
@@ -75,9 +65,13 @@ client.on('ready', async () => {
                             ],
                         });
                     }
-                    await (0, helpers_1.destroyThread)(thread);
+                    await (0, helpers_1.destroyThread)(channel);
                 }
-                await conversation.destroy();
+                await prisma_1.default.conversation.delete({
+                    where: {
+                        id: conversation.id,
+                    },
+                });
             }
             if (conversations.length > 0) {
                 console.log(`Pruned ${conversations.length} expired conversations.`);
@@ -97,4 +91,11 @@ client.on('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
     console.log(`You can invite this bot with the following URL: ${config_1.default.bot.invite_url}\n`);
 });
-client.login(config_1.default.discord.token);
+prisma_1.default
+    .$connect()
+    .then(async () => {
+    await client.login(process.env.DISCORD_TOKEN);
+})
+    .catch((err) => {
+    console.error(err);
+});

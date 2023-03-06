@@ -5,17 +5,13 @@ import {
   EmbedBuilder,
   GatewayIntentBits,
   Partials,
-  Snowflake,
-  ThreadChannel,
 } from 'discord.js';
 import path from 'path';
-import { Op } from 'sequelize';
 import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 
 import config from '@/config';
 import { destroyThread } from '@/lib/helpers';
-import sequelize from '@/lib/sequelize';
-import Conversation from '@/models/conversation';
+import prisma from '@/lib/prisma';
 
 const client = new Client({
   intents: [
@@ -37,16 +33,6 @@ client.on('ready', async () => {
   }
 
   try {
-    await sequelize.authenticate();
-
-    await Conversation.sync();
-  } catch (err) {
-    console.error('Unable to connect to the database:', err);
-
-    process.exit(1);
-  }
-
-  try {
     const isTsNode = process.argv[0].includes('ts-node');
 
     if (isTsNode) {
@@ -64,7 +50,7 @@ client.on('ready', async () => {
     await moduleLoader.updateSlashCommands();
   } catch (err) {
     console.error(err);
-
+    await prisma.$disconnect();
     process.exit(1);
   }
 
@@ -72,23 +58,22 @@ client.on('ready', async () => {
     'prune-conversations',
     async () => {
       try {
-        const conversations = await Conversation.findAll({
+        const conversations = await prisma.conversation.findMany({
           where: {
             expiresAt: {
-              [Op.ne]: null,
-              [Op.lt]: new Date(),
+              lte: new Date(),
             },
           },
         });
 
         for (const conversation of conversations) {
-          const thread = (await client.channels.cache.get(
-            conversation.get('threadId') as Snowflake
-          )) as ThreadChannel;
+          const channel = await client.channels.cache.get(
+            conversation.channelId
+          );
 
-          if (thread) {
-            const interaction = await thread.parent?.messages.fetch(
-              conversation.get('interactionId') as Snowflake
+          if (channel && channel.isThread()) {
+            const interaction = await channel.parent?.messages.fetch(
+              conversation.interactionId
             );
 
             if (interaction && interaction.embeds.length > 0) {
@@ -105,10 +90,14 @@ client.on('ready', async () => {
               });
             }
 
-            await destroyThread(thread);
+            await destroyThread(channel);
           }
 
-          await conversation.destroy();
+          await prisma.conversation.delete({
+            where: {
+              id: conversation.id,
+            },
+          });
         }
 
         if (conversations.length > 0) {
@@ -139,4 +128,11 @@ client.on('ready', async () => {
   );
 });
 
-client.login(config.discord.token);
+prisma
+  .$connect()
+  .then(async () => {
+    await client.login(process.env.DISCORD_TOKEN);
+  })
+  .catch((err) => {
+    console.error(err);
+  });
