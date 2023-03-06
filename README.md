@@ -13,16 +13,16 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 > **Warning**
 > This is a work in progress. Feel free to contribute!
 
+- [ ] Closable Threads
+- [x] ~Rate Limiting~
 - [x] ~Message Moderation~
-- [x] ~Direct Messaging~
 - [x] ~Thread Pruning~
-- [x] ~Single Question~
 
 ## Features
 
 - Configurable bot instructions
 - Remembers previous messages for context
-- Allows for follow-up corrections
+- Rate limiting per user to prevent spam or abuse
 - Message moderation and filtering
 - Automatic thread pruning
 
