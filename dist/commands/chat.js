@@ -59,7 +59,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const channel = interaction.channel;
         if (!channel || !(channel instanceof discord_js_1.TextChannel)) {
             await interaction.reply({
-                content: "You can't start a conversation here!",
+                content: "You can't start a conversation here.",
                 ephemeral: true,
             });
             return;
@@ -85,7 +85,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 1,
                 });
-                const pruneInterval = Math.ceil(config_1.default.bot.prune_interval);
+                const pruneInterval = Math.ceil(Number(config_1.default.bot.prune_interval));
                 if (pruneInterval > 0) {
                     try {
                         await prisma_1.default.conversation.create({

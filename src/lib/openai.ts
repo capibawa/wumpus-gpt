@@ -21,9 +21,9 @@ export async function createChatCompletion(
   //     getTokensFromText(message.content) +
   //     getTokensFromText(message.name)
   //   );
-  // }, 0);
+  // }, config.openai.max_tokens);
 
-  // if (tokens > config.openai.max_tokens) {
+  // if (tokens > 4096) {
   //   throw new Error(
   //     'The request has exceeded the token limit. Try again with a shorter message or start another conversation.'
   //   );
@@ -33,11 +33,11 @@ export async function createChatCompletion(
     const completion = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
       messages,
-      temperature: +config.openai.temperature,
-      top_p: +config.openai.top_p,
-      frequency_penalty: +config.openai.frequency_penalty,
-      presence_penalty: +config.openai.presence_penalty,
-      max_tokens: +config.openai.max_tokens,
+      temperature: Number(config.openai.temperature),
+      top_p: Number(config.openai.top_p),
+      frequency_penalty: Number(config.openai.frequency_penalty),
+      presence_penalty: Number(config.openai.presence_penalty),
+      max_tokens: Number(config.openai.max_tokens),
     });
 
     const message = completion.data.choices[0].message;

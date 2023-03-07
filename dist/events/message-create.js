@@ -1,9 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
-const truncate_1 = tslib_1.__importDefault(require("lodash/truncate"));
+const lodash_1 = require("lodash");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 async function handleThreadMessage(client, channel, message) {
@@ -24,7 +23,7 @@ async function handleThreadMessage(client, channel, message) {
     const messages = await channel.messages.fetch({ before: message.id });
     const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(client, message, messages));
     if (!response) {
-        handleFailedRequest(channel, message, 'An internal server error has occurred.');
+        handleFailedRequest(channel, message, 'An unexpected error has occurred.');
         return;
     }
     await channel.send(response);
@@ -47,7 +46,11 @@ async function handleDirectMessage(client, channel, message) {
 }
 exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.MessageCreate, async (message) => {
     const client = message.client;
-    if (message.author.id === client.user.id) {
+    if (message.author.id === client.user.id ||
+        message.type !== discord_js_1.MessageType.Default ||
+        !message.content ||
+        !(0, lodash_1.isEmpty)(message.embeds) ||
+        !(0, lodash_1.isEmpty)(message.mentions.members)) {
         return;
     }
     const channel = message.channel;
@@ -59,7 +62,7 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.M
     }
 });
 async function handleFailedRequest(channel, message, error) {
-    const messageContent = (0, truncate_1.default)(message.content, { length: 100 });
+    const messageContent = (0, lodash_1.truncate)(message.content, { length: 100 });
     await message.delete();
     await channel.send({
         embeds: [

@@ -12,11 +12,11 @@ async function createChatCompletion(messages) {
         const completion = await openai.createChatCompletion({
             model: 'gpt-3.5-turbo',
             messages,
-            temperature: +config_1.default.openai.temperature,
-            top_p: +config_1.default.openai.top_p,
-            frequency_penalty: +config_1.default.openai.frequency_penalty,
-            presence_penalty: +config_1.default.openai.presence_penalty,
-            max_tokens: +config_1.default.openai.max_tokens,
+            temperature: Number(config_1.default.openai.temperature),
+            top_p: Number(config_1.default.openai.top_p),
+            frequency_penalty: Number(config_1.default.openai.frequency_penalty),
+            presence_penalty: Number(config_1.default.openai.presence_penalty),
+            max_tokens: Number(config_1.default.openai.max_tokens),
         });
         const message = completion.data.choices[0].message;
         if (message) {

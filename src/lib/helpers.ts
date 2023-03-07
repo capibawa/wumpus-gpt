@@ -1,6 +1,13 @@
 import format from 'date-fns/format';
-import { Client, Collection, Message, ThreadChannel } from 'discord.js';
+import {
+  Client,
+  Collection,
+  Message,
+  MessageType,
+  ThreadChannel,
+} from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
+import { isEmpty, isString } from 'lodash';
 import {
   ChatCompletionRequestMessage,
   ChatCompletionRequestMessageRoleEnum,
@@ -18,7 +25,7 @@ export function generateChatMessages(
     getSystemMessage(behavior),
     {
       role: 'user',
-      content: typeof message === 'string' ? message : message.content,
+      content: isString(message) ? message : message.content,
     },
   ];
 }
@@ -28,31 +35,46 @@ export function generateAllChatMessages(
   message: string | Message,
   messages: Collection<string, Message<true>>
 ): Array<ChatCompletionRequestMessage> {
-  if (messages.size === 0) {
+  if (isEmpty(messages)) {
     return generateChatMessages(message);
   }
 
-  const firstMessage = messages.last();
+  const initialMessage = messages.last();
 
-  if (!firstMessage || firstMessage?.embeds.length === 0) {
+  if (
+    !initialMessage ||
+    isEmpty(initialMessage.embeds) ||
+    isEmpty(initialMessage.embeds[0].fields)
+  ) {
     return generateChatMessages(message);
   }
 
-  const prompt = firstMessage.embeds[0].fields?.[0].value;
-  const behavior = firstMessage.embeds[0].fields?.[1].value;
+  const embed = initialMessage.embeds[0];
+
+  const prompt =
+    embed.fields[0].name === 'Message' ? embed.fields[0].value : '';
+
+  const behavior =
+    embed.fields[1].name === 'Behavior' ? embed.fields[1].value : '';
 
   if (!prompt || !behavior) {
     return generateChatMessages(message);
   }
 
   return [
-    getSystemMessage(behavior !== 'Default' ? behavior : undefined),
+    getSystemMessage(behavior),
     { role: 'user', content: prompt },
     ...messages
-      .filter((message) => message.content && message.embeds.length === 0)
+      .filter(
+        (message) =>
+          message.type === MessageType.Default &&
+          message.content &&
+          isEmpty(message.embeds) &&
+          isEmpty(message.mentions.members)
+      )
       .map((message) => toChatMessage(client, message))
       .reverse(),
-    typeof message === 'string'
+    isString(message)
       ? { role: 'user', content: message }
       : toChatMessage(client, message),
   ];
@@ -61,6 +83,10 @@ export function generateAllChatMessages(
 export function getSystemMessage(
   message?: string
 ): ChatCompletionRequestMessage {
+  if (message === 'Default') {
+    message = undefined;
+  }
+
   if (message && message.slice(-1) !== '.') {
     message += '.';
   }
@@ -90,9 +116,9 @@ export async function validateMessage(
   message?: string | Message,
   alias: string = 'message'
 ): Promise<boolean> {
-  message = typeof message === 'string' ? message : message?.content;
+  message = isString(message) ? message : message?.content;
 
-  if (!message || message.length === 0) {
+  if (!message) {
     throw new Error(`There was an error processing your ${alias}.`);
   }
 
@@ -118,7 +144,8 @@ export async function destroyThread(channel: ThreadChannel): Promise<void> {
 }
 
 export function getTokensFromText(text?: string): number {
-  return text ? tokenizer.encode(text).bpe.length : 0;
+  // Add 1 to account for the role (user) being 4 characters.
+  return text ? tokenizer.encode(text).bpe.length + 1 : 0;
 }
 
 export function exceedsTokenLimit(text: string): boolean {

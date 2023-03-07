@@ -78,7 +78,7 @@ export default new DiscordCommand({
 
     if (!channel || !(channel instanceof TextChannel)) {
       await interaction.reply({
-        content: "You can't start a conversation here!",
+        content: "You can't start a conversation here.",
         ephemeral: true,
       });
 
@@ -114,7 +114,7 @@ export default new DiscordCommand({
           rateLimitPerUser: 1,
         });
 
-        const pruneInterval = Math.ceil(config.bot.prune_interval as number);
+        const pruneInterval = Math.ceil(Number(config.bot.prune_interval));
 
         if (pruneInterval > 0) {
           try {
@@ -141,7 +141,6 @@ export default new DiscordCommand({
           ],
         });
 
-        // Note: This also sends a message to the thread.
         await thread.members.add(interaction.user);
 
         await thread.send(response);

@@ -6,9 +6,10 @@ import {
   EmbedBuilder,
   Events,
   Message,
+  MessageType,
   ThreadChannel,
 } from 'discord.js';
-import truncate from 'lodash/truncate';
+import { isEmpty, truncate } from 'lodash';
 
 import {
   generateAllChatMessages,
@@ -47,11 +48,7 @@ async function handleThreadMessage(
   );
 
   if (!response) {
-    handleFailedRequest(
-      channel,
-      message,
-      'An internal server error has occurred.'
-    );
+    handleFailedRequest(channel, message, 'An unexpected error has occurred.');
 
     return;
   }
@@ -91,7 +88,13 @@ export default new DiscordEvent(
   async (message: Message) => {
     const client = message.client;
 
-    if (message.author.id === client.user.id) {
+    if (
+      message.author.id === client.user.id ||
+      message.type !== MessageType.Default ||
+      !message.content ||
+      !isEmpty(message.embeds) ||
+      !isEmpty(message.mentions.members)
+    ) {
       return;
     }
 
