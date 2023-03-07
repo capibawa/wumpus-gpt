@@ -19,14 +19,22 @@ async function handleThreadMessage(client, channel, message) {
         handleFailedRequest(channel, message, err);
         return;
     }
-    await channel.sendTyping();
-    const messages = await channel.messages.fetch({ before: message.id });
-    const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(client, message, messages));
-    if (!response) {
-        handleFailedRequest(channel, message, 'An unexpected error has occurred.');
-        return;
-    }
-    await channel.send(response);
+    (0, lodash_1.delay)(async () => {
+        if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+            return;
+        }
+        await channel.sendTyping();
+        const messages = await channel.messages.fetch({ before: message.id });
+        const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
+        if (!response) {
+            handleFailedRequest(channel, message, 'An unexpected error has occurred.');
+            return;
+        }
+        if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+            return;
+        }
+        await channel.send(response);
+    }, 2000);
 }
 async function handleDirectMessage(client, channel, message) {
     try {
@@ -61,6 +69,11 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.M
         handleDirectMessage(client, channel, message);
     }
 });
+function isLastMessageStale(message, lastMessage, botId) {
+    return (lastMessage !== null &&
+        lastMessage.id !== message.id &&
+        lastMessage.author.id !== botId);
+}
 async function handleFailedRequest(channel, message, error) {
     const messageContent = (0, lodash_1.truncate)(message.content, { length: 100 });
     await message.delete();

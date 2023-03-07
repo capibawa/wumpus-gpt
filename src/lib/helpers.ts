@@ -1,11 +1,5 @@
 import format from 'date-fns/format';
-import {
-  Client,
-  Collection,
-  Message,
-  MessageType,
-  ThreadChannel,
-} from 'discord.js';
+import { Collection, Message, MessageType, ThreadChannel } from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { isEmpty, isString } from 'lodash';
 import {
@@ -31,9 +25,9 @@ export function generateChatMessages(
 }
 
 export function generateAllChatMessages(
-  client: Client<true>,
   message: string | Message,
-  messages: Collection<string, Message<true>>
+  messages: Collection<string, Message<true>>,
+  botId: string
 ): Array<ChatCompletionRequestMessage> {
   if (isEmpty(messages)) {
     return generateChatMessages(message);
@@ -72,11 +66,11 @@ export function generateAllChatMessages(
           isEmpty(message.embeds) &&
           isEmpty(message.mentions.members)
       )
-      .map((message) => toChatMessage(client, message))
+      .map((message) => toChatMessage(message, botId))
       .reverse(),
     isString(message)
       ? { role: 'user', content: message }
-      : toChatMessage(client, message),
+      : toChatMessage(message, botId),
   ];
 }
 
@@ -100,12 +94,12 @@ export function getSystemMessage(
 }
 
 export function toChatMessage(
-  client: Client<true>,
-  message: Message
+  message: Message,
+  botId: string
 ): ChatCompletionRequestMessage {
   return {
     role:
-      message.author.id === client.user.id
+      message.author.id === botId
         ? ChatCompletionRequestMessageRoleEnum.Assistant
         : ChatCompletionRequestMessageRoleEnum.User,
     content: message.content,

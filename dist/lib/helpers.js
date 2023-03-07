@@ -19,7 +19,7 @@ function generateChatMessages(message, behavior) {
     ];
 }
 exports.generateChatMessages = generateChatMessages;
-function generateAllChatMessages(client, message, messages) {
+function generateAllChatMessages(message, messages, botId) {
     if ((0, lodash_1.isEmpty)(messages)) {
         return generateChatMessages(message);
     }
@@ -43,11 +43,11 @@ function generateAllChatMessages(client, message, messages) {
             message.content &&
             (0, lodash_1.isEmpty)(message.embeds) &&
             (0, lodash_1.isEmpty)(message.mentions.members))
-            .map((message) => toChatMessage(client, message))
+            .map((message) => toChatMessage(message, botId))
             .reverse(),
         (0, lodash_1.isString)(message)
             ? { role: 'user', content: message }
-            : toChatMessage(client, message),
+            : toChatMessage(message, botId),
     ];
 }
 exports.generateAllChatMessages = generateAllChatMessages;
@@ -65,9 +65,9 @@ function getSystemMessage(message) {
     };
 }
 exports.getSystemMessage = getSystemMessage;
-function toChatMessage(client, message) {
+function toChatMessage(message, botId) {
     return {
-        role: message.author.id === client.user.id
+        role: message.author.id === botId
             ? openai_1.ChatCompletionRequestMessageRoleEnum.Assistant
             : openai_1.ChatCompletionRequestMessageRoleEnum.User,
         content: message.content,

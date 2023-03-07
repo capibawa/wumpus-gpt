@@ -9,7 +9,7 @@ import {
   MessageType,
   ThreadChannel,
 } from 'discord.js';
-import { isEmpty, truncate } from 'lodash';
+import { delay, isEmpty, truncate } from 'lodash';
 
 import {
   generateAllChatMessages,
@@ -39,21 +39,35 @@ async function handleThreadMessage(
     return;
   }
 
-  await channel.sendTyping();
+  delay(async () => {
+    if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+      return;
+    }
 
-  const messages = await channel.messages.fetch({ before: message.id });
+    await channel.sendTyping();
 
-  const response = await createChatCompletion(
-    generateAllChatMessages(client, message, messages)
-  );
+    const messages = await channel.messages.fetch({ before: message.id });
 
-  if (!response) {
-    handleFailedRequest(channel, message, 'An unexpected error has occurred.');
+    const response = await createChatCompletion(
+      generateAllChatMessages(message, messages, client.user.id)
+    );
 
-    return;
-  }
+    if (!response) {
+      handleFailedRequest(
+        channel,
+        message,
+        'An unexpected error has occurred.'
+      );
 
-  await channel.send(response);
+      return;
+    }
+
+    if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+      return;
+    }
+
+    await channel.send(response);
+  }, 2000);
 }
 
 // TODO: Retain previous messages with constraints (e.g. 10 messages max).
@@ -107,6 +121,18 @@ export default new DiscordEvent(
     }
   }
 );
+
+function isLastMessageStale(
+  message: Message,
+  lastMessage: Message | null,
+  botId: string
+): boolean {
+  return (
+    lastMessage !== null &&
+    lastMessage.id !== message.id &&
+    lastMessage.author.id !== botId
+  );
+}
 
 async function handleFailedRequest(
   channel: ThreadChannel,
