@@ -22,9 +22,7 @@
     "gpt3-tokenizer": "^1.1.5",
     "limiter": "^2.1.0",
     "lodash": "^4.17.21",
-    "mysql2": "^3.2.0",
     "openai": "^3.2.1",
-    "sequelize": "^6.29.0",
     "toad-scheduler": "^2.2.0"
   },
   "devDependencies": {
@@ -34,7 +32,7 @@
     "nodemon": "^2.0.21",
     "prettier": "^2.8.4",
     "prisma": "^4.11.0",
-    "rimraf": "^4.3.0",
+    "rimraf": "^4.3.1",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.8.2",
     "tsconfig-paths": "^4.1.2",
