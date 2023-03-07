@@ -122,5 +122,5 @@ export function getTokensFromText(text?: string): number {
 }
 
 export function exceedsTokenLimit(text: string): boolean {
-  return getTokensFromText(text) > config.openai.max_tokens;
+  return getTokensFromText(text) > 4096 - Number(config.openai.max_tokens);
 }

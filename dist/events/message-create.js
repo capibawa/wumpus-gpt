@@ -17,24 +17,14 @@ async function handleThreadMessage(client, channel, message) {
         await (0, helpers_1.validateMessage)(message);
     }
     catch (err) {
-        const messageContent = (0, truncate_1.default)(message.content, { length: 100 });
-        await message.delete();
-        await channel.send({
-            embeds: [
-                new discord_js_1.EmbedBuilder()
-                    .setColor(discord_js_1.Colors.Red)
-                    .setTitle('Unable to complete your request')
-                    .setDescription(err.message)
-                    .setFields({ name: 'Message', value: messageContent }),
-            ],
-        });
+        handleFailedRequest(channel, message, err);
         return;
     }
     await channel.sendTyping();
     const messages = await channel.messages.fetch({ before: message.id });
     const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(client, message, messages));
     if (!response) {
-        await message.reply('There was an error while processing your response.');
+        handleFailedRequest(channel, message, 'An internal server error has occurred.');
         return;
     }
     await channel.send(response);
@@ -68,3 +58,16 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.M
         handleDirectMessage(client, channel, message);
     }
 });
+async function handleFailedRequest(channel, message, error) {
+    const messageContent = (0, truncate_1.default)(message.content, { length: 100 });
+    await message.delete();
+    await channel.send({
+        embeds: [
+            new discord_js_1.EmbedBuilder()
+                .setColor(discord_js_1.Colors.Red)
+                .setTitle('Unable to complete your request')
+                .setDescription(error instanceof Error ? error.message : error)
+                .setFields({ name: 'Message', value: messageContent }),
+        ],
+    });
+}

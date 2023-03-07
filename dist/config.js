@@ -23,7 +23,7 @@ const config = {
         top_p: process.env.OPENAI_TOP_P || 1.0,
         frequency_penalty: process.env.OPENAI_FREQUENCY_PENALTY || 0.0,
         presence_penalty: process.env.OPENAI_PRESENCE_PENALTY || 0.0,
-        max_tokens: process.env.OPENAI_MAX_TOKENS || 2048,
+        max_tokens: process.env.OPENAI_MAX_TOKENS || 512,
     },
 };
 exports.default = config;

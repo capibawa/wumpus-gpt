@@ -7,7 +7,6 @@ import {
 } from 'openai';
 
 import config from '@/config';
-import { getTokensFromText } from '@/lib/helpers';
 
 const configuration = new Configuration({ apiKey: config.openai.api_key });
 const openai = new OpenAIApi(configuration);
@@ -15,32 +14,30 @@ const openai = new OpenAIApi(configuration);
 export async function createChatCompletion(
   messages: Array<ChatCompletionRequestMessage>
 ): Promise<string | false> {
-  const tokens = messages.reduce((total, message) => {
-    return (
-      total +
-      getTokensFromText(message.role) +
-      getTokensFromText(message.content) +
-      getTokensFromText(message.name)
-    );
-  }, 0);
+  // const tokens = messages.reduce((total, message) => {
+  //   return (
+  //     total +
+  //     getTokensFromText(message.role) +
+  //     getTokensFromText(message.content) +
+  //     getTokensFromText(message.name)
+  //   );
+  // }, 0);
 
-  // console.log('Tokens:', tokens);
-
-  if (tokens > config.openai.max_tokens) {
-    throw new Error(
-      'The request has exceeded the token limit. Try again with a shorter message or start another conversation.'
-    );
-  }
+  // if (tokens > config.openai.max_tokens) {
+  //   throw new Error(
+  //     'The request has exceeded the token limit. Try again with a shorter message or start another conversation.'
+  //   );
+  // }
 
   try {
     const completion = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
       messages,
-      temperature: config.openai.temperature as number,
-      top_p: config.openai.top_p as number,
-      frequency_penalty: config.openai.frequency_penalty as number,
-      presence_penalty: config.openai.presence_penalty as number,
-      max_tokens: config.openai.max_tokens as number,
+      temperature: +config.openai.temperature,
+      top_p: +config.openai.top_p,
+      frequency_penalty: +config.openai.frequency_penalty,
+      presence_penalty: +config.openai.presence_penalty,
+      max_tokens: +config.openai.max_tokens,
     });
 
     const message = completion.data.choices[0].message;

@@ -87,6 +87,6 @@ function getTokensFromText(text) {
 }
 exports.getTokensFromText = getTokensFromText;
 function exceedsTokenLimit(text) {
-    return getTokensFromText(text) > config_1.default.openai.max_tokens;
+    return getTokensFromText(text) > 4096 - Number(config_1.default.openai.max_tokens);
 }
 exports.exceedsTokenLimit = exceedsTokenLimit;

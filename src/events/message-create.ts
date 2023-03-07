@@ -33,19 +33,7 @@ async function handleThreadMessage(
   try {
     await validateMessage(message);
   } catch (err) {
-    const messageContent = truncate(message.content, { length: 100 });
-
-    await message.delete();
-
-    await channel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(Colors.Red)
-          .setTitle('Unable to complete your request')
-          .setDescription((err as Error).message)
-          .setFields({ name: 'Message', value: messageContent }),
-      ],
-    });
+    handleFailedRequest(channel, message, err as Error);
 
     return;
   }
@@ -59,7 +47,11 @@ async function handleThreadMessage(
   );
 
   if (!response) {
-    await message.reply('There was an error while processing your response.');
+    handleFailedRequest(
+      channel,
+      message,
+      'An internal server error has occurred.'
+    );
 
     return;
   }
@@ -112,3 +104,23 @@ export default new DiscordEvent(
     }
   }
 );
+
+async function handleFailedRequest(
+  channel: ThreadChannel,
+  message: Message,
+  error: string | Error
+): Promise<void> {
+  const messageContent = truncate(message.content, { length: 100 });
+
+  await message.delete();
+
+  await channel.send({
+    embeds: [
+      new EmbedBuilder()
+        .setColor(Colors.Red)
+        .setTitle('Unable to complete your request')
+        .setDescription(error instanceof Error ? error.message : error)
+        .setFields({ name: 'Message', value: messageContent }),
+    ],
+  });
+}
