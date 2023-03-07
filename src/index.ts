@@ -1,17 +1,20 @@
+import Cron from 'croner';
 import ModuleLoader from 'discord-module-loader';
-import {
-  Client,
-  Colors,
-  EmbedBuilder,
-  GatewayIntentBits,
-  Partials,
-} from 'discord.js';
+import { Client, GatewayIntentBits, Partials } from 'discord.js';
 import path from 'path';
-import { AsyncTask, SimpleIntervalJob, ToadScheduler } from 'toad-scheduler';
 
 import config from '@/config';
-import { destroyThread } from '@/lib/helpers';
+import pruneThreads from '@/jobs/prune-threads';
 import prisma from '@/lib/prisma';
+
+const isDev = process.argv[0].includes('ts-node');
+const modulesDir = isDev ? '../.ts-node' : '../dist';
+
+if (isDev) {
+  // Force modules to be emitted during development, as the
+  // current module loader does not detect TypeScript files.
+  require('./load-modules');
+}
 
 const client = new Client({
   intents: [
@@ -23,104 +26,46 @@ const client = new Client({
   partials: [Partials.Channel],
 });
 
-const moduleLoader = new ModuleLoader(client);
-
-const scheduler = new ToadScheduler();
-
 client.on('ready', async () => {
   if (!client.user || !client.application) {
     return;
   }
 
-  try {
-    const isTsNode = process.argv[0].includes('ts-node');
+  const moduleLoader = new ModuleLoader(client);
 
-    if (isTsNode) {
-      require('./load-modules');
-    }
+  const commands = await moduleLoader.loadCommands(
+    path.join(__dirname, modulesDir, 'commands')
+  );
 
-    const modulesDir = isTsNode ? '.ts-node' : 'dist';
-
-    const commandsPath = path.join(__dirname, `../${modulesDir}`, 'commands');
-    const eventsPath = path.join(__dirname, `../${modulesDir}`, 'events');
-
-    await moduleLoader.loadCommands(commandsPath);
-    await moduleLoader.loadEvents(eventsPath);
-
-    await moduleLoader.updateSlashCommands();
-  } catch (err) {
-    console.error(err);
-    await prisma.$disconnect();
-    process.exit(1);
+  if (commands.length > 0) {
+    console.log(
+      `Loaded ${commands.length} commands:`,
+      commands.map((command) => command[0])
+    );
+  } else {
+    console.warn('No commands were found.');
   }
 
-  const task = new AsyncTask(
-    'prune-conversations',
-    async () => {
-      try {
-        const conversations = await prisma.conversation.findMany({
-          where: {
-            expiresAt: {
-              lte: new Date(),
-            },
-          },
-        });
-
-        for (const conversation of conversations) {
-          const channel = client.channels.cache.get(conversation.channelId);
-
-          if (channel && channel.isThread()) {
-            const message = await channel.parent?.messages.fetch(
-              conversation.interactionId
-            );
-
-            if (message && message.embeds.length > 0) {
-              const embed = message.embeds[0];
-
-              await message.edit({
-                embeds: [
-                  new EmbedBuilder()
-                    .setColor(Colors.Yellow)
-                    .setTitle('Conversation deleted due to inactivity')
-                    .setDescription(embed.description)
-                    .setFields(embed.fields[0]),
-                ],
-              });
-            }
-
-            await destroyThread(channel);
-          }
-
-          await prisma.conversation.delete({
-            where: {
-              id: conversation.id,
-            },
-          });
-        }
-
-        if (conversations.length > 0) {
-          console.log(`Pruned ${conversations.length} expired conversations.`);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    (err) => {
-      console.error(err);
-    }
+  const events = await moduleLoader.loadEvents(
+    path.join(__dirname, modulesDir, 'events')
   );
 
-  const job = new SimpleIntervalJob(
-    {
-      minutes: 1,
-      runImmediately: true,
-    },
-    task
-  );
+  if (events.length > 0) {
+    console.log(
+      `Loaded ${events.length} events:`,
+      events.map((event) => event[0])
+    );
+  } else {
+    console.warn('No events were found.');
+  }
 
-  scheduler.addSimpleIntervalJob(job);
+  await moduleLoader.updateSlashCommands();
 
-  console.log(`Logged in as ${client.user.tag}!`);
+  Cron('* * * * *', async () => {
+    await pruneThreads(client);
+  });
+
+  console.log(`\nLogged in as ${client.user.tag}!`);
   console.log(
     `You can invite this bot with the following URL: ${config.bot.invite_url}\n`
   );
@@ -129,7 +74,7 @@ client.on('ready', async () => {
 prisma
   .$connect()
   .then(async () => {
-    await client.login(process.env.DISCORD_TOKEN);
+    await client.login(config.discord.token);
   })
   .catch((err) => {
     console.error(err);
