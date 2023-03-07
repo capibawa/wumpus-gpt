@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exceedsTokenLimit = exports.getTokensFromText = exports.destroyThread = exports.validateMessage = exports.toChatMessage = exports.getSystemMessage = exports.generateAllChatMessages = exports.generateChatMessages = void 0;
+exports.splitMessages = exports.exceedsTokenLimit = exports.getTokensFromText = exports.destroyThread = exports.validateMessage = exports.toChatMessage = exports.getSystemMessage = exports.generateAllChatMessages = exports.generateChatMessages = void 0;
 const tslib_1 = require("tslib");
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const discord_js_1 = require("discord.js");
@@ -101,3 +101,15 @@ function exceedsTokenLimit(text) {
     return getTokensFromText(text) > 4096 - Number(config_1.default.openai.max_tokens);
 }
 exports.exceedsTokenLimit = exceedsTokenLimit;
+function splitMessages(message, maxLength = 2000) {
+    const messages = [];
+    while (message.length > maxLength) {
+        let pos = message.substring(0, maxLength).lastIndexOf(' ');
+        pos = pos <= 0 ? maxLength : pos;
+        messages.push(message.substring(0, pos));
+        message = message.substring(pos);
+    }
+    messages.push(message);
+    return messages;
+}
+exports.splitMessages = splitMessages;

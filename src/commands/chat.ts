@@ -14,6 +14,7 @@ import config from '@/config';
 import {
   destroyThread,
   generateChatMessages,
+  splitMessages,
   validateMessage,
 } from '@/lib/helpers';
 import { createChatCompletion } from '@/lib/openai';
@@ -143,7 +144,9 @@ export default new DiscordCommand({
 
         await thread.members.add(interaction.user);
 
-        await thread.send(response);
+        for (const message of splitMessages(response)) {
+          await thread.send(message);
+        }
 
         await interaction.editReply({
           embeds: [

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
+const lodash_1 = require("lodash");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = require("../lib/rate-limiter");
@@ -55,7 +56,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
             const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
-            await interaction.editReply(response || 'There was an error while processing your response.');
+            await interaction.editReply(response
+                ? (0, lodash_1.truncate)(response, { length: 2000 })
+                : 'There was an error while processing your response.');
         });
         if (!executed) {
             await interaction.reply({

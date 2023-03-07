@@ -1,5 +1,6 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
+import { truncate } from 'lodash';
 
 import { generateChatMessages, validateMessage } from '@/lib/helpers';
 import { createChatCompletion } from '@/lib/openai';
@@ -66,7 +67,9 @@ export default new DiscordCommand({
       );
 
       await interaction.editReply(
-        response || 'There was an error while processing your response.'
+        response
+          ? truncate(response, { length: 2000 })
+          : 'There was an error while processing your response.'
       );
     });
 

@@ -110,7 +110,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     ],
                 });
                 await thread.members.add(interaction.user);
-                await thread.send(response);
+                for (const message of (0, helpers_1.splitMessages)(response)) {
+                    await thread.send(message);
+                }
                 await interaction.editReply({
                     embeds: [
                         getThreadCreatedEmbed(thread, interaction.user, message, behavior),

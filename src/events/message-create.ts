@@ -14,6 +14,7 @@ import { delay, isEmpty, truncate } from 'lodash';
 import {
   generateAllChatMessages,
   generateChatMessages,
+  splitMessages,
   validateMessage,
 } from '@/lib/helpers';
 import { createChatCompletion } from '@/lib/openai';
@@ -66,7 +67,9 @@ async function handleThreadMessage(
       return;
     }
 
-    await channel.send(response);
+    for (const message of splitMessages(response)) {
+      await channel.send(message);
+    }
   }, 2000);
 }
 
@@ -94,7 +97,9 @@ async function handleDirectMessage(
     return;
   }
 
-  await channel.send(response);
+  for (const message of splitMessages(response)) {
+    await channel.send(message);
+  }
 }
 
 export default new DiscordEvent(

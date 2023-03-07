@@ -145,3 +145,24 @@ export function getTokensFromText(text?: string): number {
 export function exceedsTokenLimit(text: string): boolean {
   return getTokensFromText(text) > 4096 - Number(config.openai.max_tokens);
 }
+
+export function splitMessages(
+  message: string,
+  maxLength: number = 2000
+): Array<string> {
+  const messages = [];
+
+  while (message.length > maxLength) {
+    let pos = message.substring(0, maxLength).lastIndexOf(' ');
+
+    pos = pos <= 0 ? maxLength : pos;
+
+    messages.push(message.substring(0, pos));
+
+    message = message.substring(pos);
+  }
+
+  messages.push(message);
+
+  return messages;
+}

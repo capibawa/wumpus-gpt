@@ -33,7 +33,9 @@ async function handleThreadMessage(client, channel, message) {
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
             return;
         }
-        await channel.send(response);
+        for (const message of (0, helpers_1.splitMessages)(response)) {
+            await channel.send(message);
+        }
     }, 2000);
 }
 async function handleDirectMessage(client, channel, message) {
@@ -50,7 +52,9 @@ async function handleDirectMessage(client, channel, message) {
         await message.reply('There was an error while processing your response.');
         return;
     }
-    await channel.send(response);
+    for (const message of (0, helpers_1.splitMessages)(response)) {
+        await channel.send(message);
+    }
 }
 exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.MessageCreate, async (message) => {
     const client = message.client;
