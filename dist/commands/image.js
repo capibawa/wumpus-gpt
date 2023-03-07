@@ -38,13 +38,6 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             });
             return;
         }
-        if (await (0, openai_1.isTextFlagged)(prompt)) {
-            await interaction.reply({
-                content: 'Your prompt has been blocked by moderation!',
-                ephemeral: true,
-            });
-            return;
-        }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
             const imageUrl = await (0, openai_1.createImage)(prompt);

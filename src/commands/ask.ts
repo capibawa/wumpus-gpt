@@ -1,8 +1,8 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
-import { exceedsTokenLimit } from '@/lib/helpers';
-import { getChatResponse, isTextFlagged } from '@/lib/openai';
+import { generateChatMessages, validateMessage } from '@/lib/helpers';
+import { createChatCompletion } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(5, 'minute');
@@ -32,18 +32,11 @@ export default new DiscordCommand({
 
     const message = interaction.options.getString('message')?.trim();
 
-    if (!message || message.length === 0) {
+    try {
+      await validateMessage(message);
+    } catch (err) {
       await interaction.reply({
-        content: 'You must provide a message to start a conversation!',
-        ephemeral: true,
-      });
-
-      return;
-    }
-
-    if (exceedsTokenLimit(message)) {
-      await interaction.reply({
-        content: 'Your message is too long, try shortening it!',
+        content: (err as Error).message,
         ephemeral: true,
       });
 
@@ -52,32 +45,29 @@ export default new DiscordCommand({
 
     const behavior = interaction.options.getString('behavior')?.trim();
 
-    if (behavior && (await isTextFlagged(behavior))) {
-      await interaction.reply({
-        content: 'Your behavior has been blocked by moderation!',
-        ephemeral: true,
-      });
+    if (behavior) {
+      try {
+        await validateMessage(behavior, 'behavior');
+      } catch (err) {
+        await interaction.reply({
+          content: (err as Error).message,
+          ephemeral: true,
+        });
 
-      return;
+        return;
+      }
     }
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.deferReply();
 
-      try {
-        const response = await getChatResponse(
-          [{ role: 'user', content: message }],
-          behavior
-        );
+      const response = await createChatCompletion(
+        generateChatMessages(message!, behavior)
+      );
 
-        await interaction.editReply(response);
-      } catch (err) {
-        await interaction.editReply(
-          err instanceof Error
-            ? err.message
-            : 'There was an error while processing your response.'
-        );
-      }
+      await interaction.editReply(
+        response || 'There was an error while processing your response.'
+      );
     });
 
     if (!executed) {

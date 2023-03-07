@@ -33,37 +33,31 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const message = interaction.options.getString('message')?.trim();
-        if (!message || message.length === 0) {
-            await interaction.reply({
-                content: 'You must provide a message to start a conversation!',
-                ephemeral: true,
-            });
-            return;
+        try {
+            await (0, helpers_1.validateMessage)(message);
         }
-        if ((0, helpers_1.exceedsTokenLimit)(message)) {
+        catch (err) {
             await interaction.reply({
-                content: 'Your message is too long, try shortening it!',
+                content: err.message,
                 ephemeral: true,
             });
             return;
         }
         const behavior = interaction.options.getString('behavior')?.trim();
-        if (behavior && (await (0, openai_1.isTextFlagged)(behavior))) {
-            await interaction.reply({
-                content: 'Your behavior has been blocked by moderation!',
-                ephemeral: true,
-            });
-            return;
+        if (behavior) {
+            try {
+                await (0, helpers_1.validateMessage)(behavior, 'behavior');
+            }
+            catch (err) {
+                await interaction.reply({
+                    content: err.message,
+                    ephemeral: true,
+                });
+                return;
+            }
         }
         const channel = interaction.channel;
-        if (!channel) {
-            await interaction.reply({
-                content: 'There was an error while executing this command!',
-                ephemeral: true,
-            });
-            return;
-        }
-        if (!(channel instanceof discord_js_1.TextChannel)) {
+        if (!channel || !(channel instanceof discord_js_1.TextChannel)) {
             await interaction.reply({
                 content: "You can't start a conversation here!",
                 ephemeral: true,
@@ -71,26 +65,16 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
-            await interaction.reply({
+            await interaction.deferReply();
+            await interaction.editReply({
                 embeds: [getThreadCreatingEmbed(interaction.user, message, behavior)],
             });
-            let response = null;
-            try {
-                response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }], behavior);
-            }
-            catch (err) {
-                if (err instanceof Error) {
-                    const isModerated = err.message.includes('moderation');
-                    await interaction.editReply({
-                        embeds: [
-                            isModerated
-                                ? getModeratedEmbed(interaction.user, message, behavior)
-                                : getErrorEmbed(interaction.user, message, behavior),
-                        ],
-                    });
-                    return;
-                }
-                throw err;
+            const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
+            if (!response) {
+                await interaction.editReply({
+                    embeds: [getErrorEmbed(interaction.user, message, behavior)],
+                });
+                return;
             }
             try {
                 const thread = await channel.threads.create({
@@ -117,9 +101,14 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                         throw err;
                     }
                 }
-                if (behavior) {
-                    await thread.send(`Behavior: ${behavior}`);
-                }
+                await thread.send({
+                    embeds: [
+                        new discord_js_1.EmbedBuilder().setColor(discord_js_1.Colors.Blue).setFields([
+                            { name: 'Message', value: message },
+                            { name: 'Behavior', value: behavior || 'Default' },
+                        ]),
+                    ],
+                });
                 await thread.members.add(interaction.user);
                 await thread.send(response);
                 await interaction.editReply({
@@ -144,14 +133,13 @@ exports.default = new discord_module_loader_1.DiscordCommand({
     },
 });
 function getBaseEmbed(user, message, behavior) {
-    const fields = [{ name: 'Message', value: message }];
-    if (behavior) {
-        fields.push({ name: 'Behavior', value: behavior });
-    }
     return new discord_js_1.EmbedBuilder()
         .setColor(discord_js_1.Colors.Green)
         .setDescription(`<@${user.id}> has started a conversation! 💬`)
-        .setFields(fields);
+        .setFields([
+        { name: 'Message', value: message },
+        { name: 'Behavior', value: behavior || 'Default' },
+    ]);
 }
 function getThreadCreatingEmbed(user, message, behavior) {
     return getBaseEmbed(user, message, behavior).addFields({
@@ -164,11 +152,6 @@ function getThreadCreatedEmbed(thread, user, message, behavior) {
         name: 'Thread',
         value: thread.toString(),
     });
-}
-function getModeratedEmbed(user, message, behavior) {
-    return getBaseEmbed(user, message, behavior)
-        .setColor(discord_js_1.Colors.DarkRed)
-        .setTitle('Your message has been blocked by moderation');
 }
 function getErrorEmbed(user, message, behavior) {
     return getBaseEmbed(user, message, behavior)

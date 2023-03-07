@@ -1,8 +1,21 @@
 import { DiscordEvent } from 'discord-module-loader';
-import { Client, DMChannel, Events, Message, ThreadChannel } from 'discord.js';
-import { ChatCompletionRequestMessage } from 'openai';
+import {
+  Client,
+  Colors,
+  DMChannel,
+  EmbedBuilder,
+  Events,
+  Message,
+  ThreadChannel,
+} from 'discord.js';
+import truncate from 'lodash/truncate';
 
-import { getChatResponse } from '@/lib/openai';
+import {
+  generateAllChatMessages,
+  generateChatMessages,
+  validateMessage,
+} from '@/lib/helpers';
+import { createChatCompletion } from '@/lib/openai';
 
 async function handleThreadMessage(
   client: Client<true>,
@@ -17,48 +30,41 @@ async function handleThreadMessage(
     return;
   }
 
+  try {
+    await validateMessage(message);
+  } catch (err) {
+    const messageContent = truncate(message.content, { length: 100 });
+
+    await message.delete();
+
+    await channel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(Colors.Red)
+          .setTitle('Unable to complete your request')
+          .setDescription((err as Error).message)
+          .setFields({ name: 'Message', value: messageContent }),
+      ],
+    });
+
+    return;
+  }
+
   await channel.sendTyping();
 
-  const messages = await channel.messages.fetch();
+  const messages = await channel.messages.fetch({ before: message.id });
 
-  const firstMessage = messages.last();
-  const lastMessage = messages.first();
+  const response = await createChatCompletion(
+    generateAllChatMessages(client, message, messages)
+  );
 
-  // TODO: Improve behavior detection.
-  const behavior = firstMessage?.content?.includes('Behavior: ')
-    ? firstMessage.content.split('Behavior: ')[1]
-    : undefined;
+  if (!response) {
+    await message.reply('There was an error while processing your response.');
 
-  const parsedMessages = messages
-    .filter((message) => message.content)
-    .map((message) => {
-      return {
-        role: message.author.id === client.user.id ? 'assistant' : 'user',
-        content: message.content,
-      };
-    }) as Array<ChatCompletionRequestMessage>;
-
-  if (behavior) {
-    parsedMessages.pop();
+    return;
   }
 
-  try {
-    const response = await getChatResponse(parsedMessages.reverse(), behavior);
-
-    await channel.send(response);
-  } catch (err) {
-    if (err instanceof Error) {
-      await lastMessage?.reply(err.message);
-
-      if (err.message.includes('token')) {
-        // Do something here because the token limit has been reached.
-      }
-    } else {
-      await lastMessage?.reply(
-        'There was an error while processing your response.'
-      );
-    }
-  }
+  await channel.send(response);
 }
 
 // TODO: Retain previous messages with constraints (e.g. 10 messages max).
@@ -67,21 +73,25 @@ async function handleDirectMessage(
   channel: DMChannel,
   message: Message
 ) {
+  try {
+    await validateMessage(message);
+  } catch (err) {
+    await message.reply((err as Error).message);
+
+    return;
+  }
+
   await channel.sendTyping();
 
-  try {
-    const response = await getChatResponse([
-      { role: 'user', content: message.content },
-    ]);
+  const response = await createChatCompletion(generateChatMessages(message));
 
-    await channel.send(response);
-  } catch (err) {
-    await message.reply(
-      err instanceof Error
-        ? err.message
-        : 'There was an error while processing your response.'
-    );
+  if (!response) {
+    await message.reply('There was an error while processing your response.');
+
+    return;
   }
+
+  await channel.send(response);
 }
 
 export default new DiscordEvent(

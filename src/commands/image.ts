@@ -1,7 +1,7 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
-import { createImage, isTextFlagged } from '@/lib/openai';
+import { createImage } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(1, 'minute');
@@ -45,14 +45,14 @@ export default new DiscordCommand({
       return;
     }
 
-    if (await isTextFlagged(prompt)) {
-      await interaction.reply({
-        content: 'Your prompt has been blocked by moderation!',
-        ephemeral: true,
-      });
+    // if (await isTextFlagged(prompt)) {
+    //   await interaction.reply({
+    //     content: 'Your prompt has been blocked by moderation!',
+    //     ephemeral: true,
+    //   });
 
-      return;
-    }
+    //   return;
+    // }
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.deferReply();

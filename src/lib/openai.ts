@@ -1,5 +1,4 @@
 import axios from 'axios';
-import format from 'date-fns/format';
 import {
   ChatCompletionRequestMessage,
   Configuration,
@@ -8,46 +7,35 @@ import {
 } from 'openai';
 
 import config from '@/config';
-import { exceedsTokenLimit } from '@/lib/helpers';
+import { getTokensFromText } from '@/lib/helpers';
 
 const configuration = new Configuration({ apiKey: config.openai.api_key });
 const openai = new OpenAIApi(configuration);
 
-// TODO: Better error handling
-export async function getChatResponse(
-  messages: Array<ChatCompletionRequestMessage>,
-  behavior?: string
-): Promise<string> {
-  const latestMessage = messages.pop()!; // We are assuming the array is never empty.
+export async function createChatCompletion(
+  messages: Array<ChatCompletionRequestMessage>
+): Promise<string | false> {
+  const tokens = messages.reduce((total, message) => {
+    return (
+      total +
+      getTokensFromText(message.role) +
+      getTokensFromText(message.content) +
+      getTokensFromText(message.name)
+    );
+  }, 0);
 
-  if (await isTextFlagged(latestMessage.content)) {
-    throw new Error('Your message has been blocked by moderation.');
-  }
+  // console.log('Tokens:', tokens);
 
-  const systemMessage = {
-    role: 'system',
-    content:
-      (behavior || config.bot.instructions) +
-      ` The current date is ${format(new Date(), 'PPP')}.`,
-  } as ChatCompletionRequestMessage;
-
-  const moderatedMessages = await getModeratedChatMessages(messages);
-
-  const chatMessages = [systemMessage, ...moderatedMessages, latestMessage];
-
-  if (
-    exceedsTokenLimit(chatMessages.map((message) => message.content).join('\n')) // Do we need to line break or add a space?
-  ) {
-    // We can go above and beyond by checking if `/chat` works in the current channel.
+  if (tokens > config.openai.max_tokens) {
     throw new Error(
-      'The request has exceeded the token limit! Try again with a shorter message or start another conversation via the `/chat` command.'
+      'The request has exceeded the token limit. Try again with a shorter message or start another conversation.'
     );
   }
 
   try {
     const completion = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
-      messages: chatMessages,
+      messages,
       temperature: config.openai.temperature as number,
       top_p: config.openai.top_p as number,
       frequency_penalty: config.openai.frequency_penalty as number,
@@ -64,43 +52,7 @@ export async function getChatResponse(
     logError(err);
   }
 
-  throw new Error('There was an error while processing a response.');
-}
-
-export async function getModeratedChatMessages(
-  messages: Array<ChatCompletionRequestMessage>
-): Promise<Array<ChatCompletionRequestMessage>> {
-  const moderatedMessages = [] as Array<ChatCompletionRequestMessage>;
-
-  if (messages.length === 0) {
-    return moderatedMessages;
-  }
-
-  const moderation = await openai.createModeration({
-    input: messages.map((message) =>
-      message.role === 'user' ? message.content : ''
-    ),
-  });
-
-  moderation.data.results.forEach((result, index) => {
-    const message = messages[index];
-
-    if (message.role === 'user' && result.flagged) {
-      return;
-    }
-
-    // TODO: Don't use a hardcoded string.
-    if (
-      message.role === 'assistant' &&
-      message.content === 'Your message has been blocked by moderation.'
-    ) {
-      return;
-    }
-
-    moderatedMessages.push(message);
-  });
-
-  return moderatedMessages;
+  return false;
 }
 
 export async function createImage(prompt: string): Promise<string> {

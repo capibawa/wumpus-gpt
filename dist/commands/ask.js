@@ -29,39 +29,33 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const message = interaction.options.getString('message')?.trim();
-        if (!message || message.length === 0) {
-            await interaction.reply({
-                content: 'You must provide a message to start a conversation!',
-                ephemeral: true,
-            });
-            return;
+        try {
+            await (0, helpers_1.validateMessage)(message);
         }
-        if ((0, helpers_1.exceedsTokenLimit)(message)) {
+        catch (err) {
             await interaction.reply({
-                content: 'Your message is too long, try shortening it!',
+                content: err.message,
                 ephemeral: true,
             });
             return;
         }
         const behavior = interaction.options.getString('behavior')?.trim();
-        if (behavior && (await (0, openai_1.isTextFlagged)(behavior))) {
-            await interaction.reply({
-                content: 'Your behavior has been blocked by moderation!',
-                ephemeral: true,
-            });
-            return;
+        if (behavior) {
+            try {
+                await (0, helpers_1.validateMessage)(behavior, 'behavior');
+            }
+            catch (err) {
+                await interaction.reply({
+                    content: err.message,
+                    ephemeral: true,
+                });
+                return;
+            }
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
-            try {
-                const response = await (0, openai_1.getChatResponse)([{ role: 'user', content: message }], behavior);
-                await interaction.editReply(response);
-            }
-            catch (err) {
-                await interaction.editReply(err instanceof Error
-                    ? err.message
-                    : 'There was an error while processing your response.');
-            }
+            const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
+            await interaction.editReply(response || 'There was an error while processing your response.');
         });
         if (!executed) {
             await interaction.reply({
