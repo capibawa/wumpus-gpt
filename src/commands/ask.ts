@@ -3,7 +3,7 @@ import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 import { truncate } from 'lodash';
 
 import { generateChatMessages, validateMessage } from '@/lib/helpers';
-import { createChatCompletion } from '@/lib/openai';
+import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(5, 'minute');
@@ -62,14 +62,14 @@ export default new DiscordCommand({
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.deferReply();
 
-      const response = await createChatCompletion(
+      const completion = await createChatCompletion(
         generateChatMessages(message!, behavior)
       );
 
       await interaction.editReply(
-        response
-          ? truncate(response, { length: 2000 })
-          : 'There was an error while processing your response.'
+        completion.status === CompletionStatus.Ok
+          ? truncate(completion.message!, { length: 2000 })
+          : completion.statusMessage!
       );
     });
 

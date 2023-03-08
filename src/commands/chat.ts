@@ -17,7 +17,7 @@ import {
   splitMessages,
   validateMessage,
 } from '@/lib/helpers';
-import { createChatCompletion } from '@/lib/openai';
+import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import prisma from '@/lib/prisma';
 import { RateLimiter } from '@/lib/rate-limiter';
 
@@ -93,13 +93,20 @@ export default new DiscordCommand({
         embeds: [getThreadCreatingEmbed(interaction.user, message!, behavior)],
       });
 
-      const response = await createChatCompletion(
+      const completion = await createChatCompletion(
         generateChatMessages(message!, behavior)
       );
 
-      if (!response) {
+      if (completion.status !== CompletionStatus.Ok) {
         await interaction.editReply({
-          embeds: [getErrorEmbed(interaction.user, message!, behavior)],
+          embeds: [
+            getErrorEmbed(
+              interaction.user,
+              message!,
+              behavior,
+              completion.statusMessage
+            ),
+          ],
         });
 
         return;
@@ -144,7 +151,7 @@ export default new DiscordCommand({
 
         await thread.members.add(interaction.user);
 
-        for (const message of splitMessages(response)) {
+        for (const message of splitMessages(completion.message!)) {
           await thread.send(message);
         }
 
@@ -211,9 +218,11 @@ function getThreadCreatedEmbed(
 function getErrorEmbed(
   user: User,
   message: string,
-  behavior?: string
+  behavior?: string,
+  error?: string
 ): EmbedBuilder {
   return getBaseEmbed(user, message, behavior)
     .setColor(Colors.Red)
-    .setTitle('There was an error while creating a thread');
+    .setTitle('There was an error while creating a thread')
+    .addFields({ name: 'Error', value: error || 'Unknown' });
 }

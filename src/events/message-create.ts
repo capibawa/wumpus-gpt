@@ -17,7 +17,7 @@ import {
   splitMessages,
   validateMessage,
 } from '@/lib/helpers';
-import { createChatCompletion } from '@/lib/openai';
+import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 
 async function handleThreadMessage(
   client: Client<true>,
@@ -49,16 +49,12 @@ async function handleThreadMessage(
 
     const messages = await channel.messages.fetch({ before: message.id });
 
-    const response = await createChatCompletion(
+    const completion = await createChatCompletion(
       generateAllChatMessages(message, messages, client.user.id)
     );
 
-    if (!response) {
-      handleFailedRequest(
-        channel,
-        message,
-        'An unexpected error has occurred.'
-      );
+    if (completion.status !== CompletionStatus.Ok) {
+      handleFailedRequest(channel, message, completion.statusMessage!);
 
       return;
     }
@@ -67,7 +63,7 @@ async function handleThreadMessage(
       return;
     }
 
-    for (const message of splitMessages(response)) {
+    for (const message of splitMessages(completion.message!)) {
       await channel.send(message);
     }
   }, 2000);
@@ -89,15 +85,15 @@ async function handleDirectMessage(
 
   await channel.sendTyping();
 
-  const response = await createChatCompletion(generateChatMessages(message));
+  const completion = await createChatCompletion(generateChatMessages(message));
 
-  if (!response) {
-    await message.reply('There was an error while processing your response.');
+  if (completion.status !== CompletionStatus.Ok) {
+    await message.reply(completion.statusMessage!);
 
     return;
   }
 
-  for (const message of splitMessages(response)) {
+  for (const message of splitMessages(completion.message!)) {
     await channel.send(message);
   }
 }

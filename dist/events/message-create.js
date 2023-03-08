@@ -25,15 +25,15 @@ async function handleThreadMessage(client, channel, message) {
         }
         await channel.sendTyping();
         const messages = await channel.messages.fetch({ before: message.id });
-        const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
-        if (!response) {
-            handleFailedRequest(channel, message, 'An unexpected error has occurred.');
+        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
+        if (completion.status !== openai_1.CompletionStatus.Ok) {
+            handleFailedRequest(channel, message, completion.statusMessage);
             return;
         }
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
             return;
         }
-        for (const message of (0, helpers_1.splitMessages)(response)) {
+        for (const message of (0, helpers_1.splitMessages)(completion.message)) {
             await channel.send(message);
         }
     }, 2000);
@@ -47,12 +47,12 @@ async function handleDirectMessage(client, channel, message) {
         return;
     }
     await channel.sendTyping();
-    const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
-    if (!response) {
-        await message.reply('There was an error while processing your response.');
+    const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
+    if (completion.status !== openai_1.CompletionStatus.Ok) {
+        await message.reply(completion.statusMessage);
         return;
     }
-    for (const message of (0, helpers_1.splitMessages)(response)) {
+    for (const message of (0, helpers_1.splitMessages)(completion.message)) {
         await channel.send(message);
     }
 }

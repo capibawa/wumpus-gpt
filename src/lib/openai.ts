@@ -11,9 +11,23 @@ import config from '@/config';
 const configuration = new Configuration({ apiKey: config.openai.api_key });
 const openai = new OpenAIApi(configuration);
 
+export enum CompletionStatus {
+  Ok = 0,
+  Moderated = 1,
+  ContextLengthExceeded = 2,
+  InvalidRequest = 3,
+  UnexpectedError = 4,
+}
+
+export interface CompletionResponse {
+  status: CompletionStatus;
+  message?: string;
+  statusMessage?: string;
+}
+
 export async function createChatCompletion(
   messages: Array<ChatCompletionRequestMessage>
-): Promise<string | false> {
+): Promise<CompletionResponse> {
   // const tokens = messages.reduce((total, message) => {
   //   return (
   //     total +
@@ -43,13 +57,47 @@ export async function createChatCompletion(
     const message = completion.data.choices[0].message;
 
     if (message) {
-      return message.content;
+      return {
+        status: CompletionStatus.Ok,
+        message: message.content.trim(),
+      };
     }
   } catch (err) {
-    logError(err);
+    if (axios.isAxiosError(err)) {
+      if (err.response?.data?.error?.code === 'context_length_exceeded') {
+        return {
+          status: CompletionStatus.ContextLengthExceeded,
+          statusMessage:
+            'The request has exceeded the token limit. Try again with a shorter message or start another conversation.',
+        };
+      } else if (err.response?.data?.error?.type === 'invalid_request_error') {
+        logError(err);
+
+        const error = err.response.data.error;
+
+        return {
+          status: CompletionStatus.InvalidRequest,
+          statusMessage: error.message,
+        };
+      }
+    } else {
+      logError(err);
+
+      return {
+        status: CompletionStatus.UnexpectedError,
+        statusMessage:
+          err instanceof Error
+            ? err.message
+            : (err as string) ||
+              'There was an unexpected error processing your request.',
+      };
+    }
   }
 
-  return false;
+  return {
+    status: CompletionStatus.UnexpectedError,
+    statusMessage: 'There was an unexpected error processing your request.',
+  };
 }
 
 export async function createImage(prompt: string): Promise<string> {

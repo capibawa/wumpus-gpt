@@ -69,10 +69,12 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             await interaction.editReply({
                 embeds: [getThreadCreatingEmbed(interaction.user, message, behavior)],
             });
-            const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
-            if (!response) {
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
+            if (completion.status !== openai_1.CompletionStatus.Ok) {
                 await interaction.editReply({
-                    embeds: [getErrorEmbed(interaction.user, message, behavior)],
+                    embeds: [
+                        getErrorEmbed(interaction.user, message, behavior, completion.statusMessage),
+                    ],
                 });
                 return;
             }
@@ -110,7 +112,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     ],
                 });
                 await thread.members.add(interaction.user);
-                for (const message of (0, helpers_1.splitMessages)(response)) {
+                for (const message of (0, helpers_1.splitMessages)(completion.message)) {
                     await thread.send(message);
                 }
                 await interaction.editReply({
@@ -155,8 +157,9 @@ function getThreadCreatedEmbed(thread, user, message, behavior) {
         value: thread.toString(),
     });
 }
-function getErrorEmbed(user, message, behavior) {
+function getErrorEmbed(user, message, behavior, error) {
     return getBaseEmbed(user, message, behavior)
         .setColor(discord_js_1.Colors.Red)
-        .setTitle('There was an error while creating a thread');
+        .setTitle('There was an error while creating a thread')
+        .addFields({ name: 'Error', value: error || 'Unknown' });
 }

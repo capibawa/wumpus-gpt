@@ -25,7 +25,7 @@ async function pruneThreads(client) {
                                 .setColor(discord_js_1.Colors.Yellow)
                                 .setTitle('Conversation deleted due to inactivity')
                                 .setDescription(embed.description)
-                                .setFields(embed.fields[0]),
+                                .setFields(embed.fields.filter((field) => field.name !== 'Thread')),
                         ],
                     });
                 }

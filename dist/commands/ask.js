@@ -55,10 +55,10 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
-            const response = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
-            await interaction.editReply(response
-                ? (0, lodash_1.truncate)(response, { length: 2000 })
-                : 'There was an error while processing your response.');
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
+            await interaction.editReply(completion.status === openai_1.CompletionStatus.Ok
+                ? (0, lodash_1.truncate)(completion.message, { length: 2000 })
+                : completion.statusMessage);
         });
         if (!executed) {
             await interaction.reply({
