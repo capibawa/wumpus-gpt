@@ -32,7 +32,9 @@ export default async function pruneThreads(
                 .setColor(Colors.Yellow)
                 .setTitle('Conversation deleted due to inactivity')
                 .setDescription(embed.description)
-                .setFields(embed.fields[0]),
+                .setFields(
+                  embed.fields.filter((field) => field.name !== 'Thread')
+                ),
             ],
           });
         }
