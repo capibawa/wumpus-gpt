@@ -122,7 +122,7 @@ export default new DiscordCommand({
           rateLimitPerUser: 1,
         });
 
-        const pruneInterval = Math.ceil(Number(config.bot.prune_interval));
+        const pruneInterval = Number(config.bot.prune_interval);
 
         if (pruneInterval > 0) {
           try {
@@ -130,7 +130,9 @@ export default new DiscordCommand({
               data: {
                 interactionId: (await interaction.fetchReply()).id,
                 channelId: thread.id,
-                expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
+                expiresAt: new Date(
+                  Date.now() + 3600000 * Math.ceil(pruneInterval)
+                ),
               },
             });
           } catch (err) {

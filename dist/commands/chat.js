@@ -88,14 +88,14 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 1,
                 });
-                const pruneInterval = Math.ceil(Number(config_1.default.bot.prune_interval));
+                const pruneInterval = Number(config_1.default.bot.prune_interval);
                 if (pruneInterval > 0) {
                     try {
                         await prisma_1.default.conversation.create({
                             data: {
                                 interactionId: (await interaction.fetchReply()).id,
                                 channelId: thread.id,
-                                expiresAt: new Date(Date.now() + 3600000 * pruneInterval),
+                                expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
                             },
                         });
                     }

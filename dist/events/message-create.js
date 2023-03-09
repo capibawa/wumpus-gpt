@@ -1,11 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
 const lodash_1 = require("lodash");
+const config_1 = tslib_1.__importDefault(require("../config"));
 const buttons_1 = require("../lib/buttons");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
+const prisma_1 = tslib_1.__importDefault(require("../lib/prisma"));
 async function handleThreadMessage(client, channel, message) {
     if (channel.ownerId !== client.user.id) {
         return;
@@ -39,6 +42,20 @@ async function handleThreadMessage(client, channel, message) {
             content: completion.message,
             components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
         });
+        const pruneInterval = Number(config_1.default.bot.prune_interval);
+        if (pruneInterval > 0) {
+            try {
+                await prisma_1.default.conversation.update({
+                    where: { channelId: channel.id },
+                    data: {
+                        expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
+                    },
+                });
+            }
+            catch (err) {
+                console.error(err);
+            }
+        }
     }, 2000);
 }
 async function handleDirectMessage(client, channel, message) {

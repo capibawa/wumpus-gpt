@@ -11,6 +11,7 @@ import {
 } from 'discord.js';
 import { delay, isEmpty, truncate } from 'lodash';
 
+import config from '@/config';
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import {
   detachComponents,
@@ -19,6 +20,7 @@ import {
   validateMessage,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
+import prisma from '@/lib/prisma';
 
 async function handleThreadMessage(
   client: Client<true>,
@@ -70,6 +72,23 @@ async function handleThreadMessage(
       content: completion.message,
       components: [createActionRow(createRegenerateButton())],
     });
+
+    const pruneInterval = Number(config.bot.prune_interval);
+
+    if (pruneInterval > 0) {
+      try {
+        await prisma.conversation.update({
+          where: { channelId: channel.id },
+          data: {
+            expiresAt: new Date(
+              Date.now() + 3600000 * Math.ceil(pruneInterval)
+            ),
+          },
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
   }, 2000);
 }
 
