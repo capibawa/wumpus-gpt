@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { truncate } from 'lodash';
 import {
   ChatCompletionRequestMessage,
   Configuration,
@@ -58,7 +59,7 @@ export async function createChatCompletion(
     if (message) {
       return {
         status: CompletionStatus.Ok,
-        message: message.content.trim(),
+        message: truncate(message.content.trim(), { length: 2000 }),
       };
     }
   } catch (err) {

@@ -5,6 +5,7 @@ const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
 const truncate_1 = tslib_1.__importDefault(require("lodash/truncate"));
 const config_1 = tslib_1.__importDefault(require("../config"));
+const buttons_1 = require("../lib/buttons");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const prisma_1 = tslib_1.__importDefault(require("../lib/prisma"));
@@ -112,9 +113,10 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     ],
                 });
                 await thread.members.add(interaction.user);
-                for (const message of (0, helpers_1.splitMessages)(completion.message)) {
-                    await thread.send(message);
-                }
+                await thread.send({
+                    content: completion.message,
+                    components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
+                });
                 await interaction.editReply({
                     embeds: [
                         getThreadCreatedEmbed(thread, interaction.user, message, behavior),

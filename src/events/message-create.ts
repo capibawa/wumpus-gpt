@@ -11,10 +11,11 @@ import {
 } from 'discord.js';
 import { delay, isEmpty, truncate } from 'lodash';
 
+import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import {
+  detachComponents,
   generateAllChatMessages,
   generateChatMessages,
-  splitMessages,
   validateMessage,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
@@ -35,7 +36,7 @@ async function handleThreadMessage(
   try {
     await validateMessage(message);
   } catch (err) {
-    handleFailedRequest(channel, message, err as Error);
+    await handleFailedRequest(channel, message, err as Error);
 
     return;
   }
@@ -47,14 +48,14 @@ async function handleThreadMessage(
 
     await channel.sendTyping();
 
-    const messages = await channel.messages.fetch({ before: message.id });
+    const threadMessages = await channel.messages.fetch({ before: message.id });
 
     const completion = await createChatCompletion(
-      generateAllChatMessages(message, messages, client.user.id)
+      generateAllChatMessages(message, threadMessages, client.user.id)
     );
 
     if (completion.status !== CompletionStatus.Ok) {
-      handleFailedRequest(channel, message, completion.message);
+      await handleFailedRequest(channel, message, completion.message);
 
       return;
     }
@@ -63,9 +64,12 @@ async function handleThreadMessage(
       return;
     }
 
-    for (const message of splitMessages(completion.message)) {
-      await channel.send(message);
-    }
+    await detachComponents(threadMessages);
+
+    await channel.send({
+      content: completion.message,
+      components: [createActionRow(createRegenerateButton())],
+    });
   }, 2000);
 }
 
@@ -93,9 +97,7 @@ async function handleDirectMessage(
     return;
   }
 
-  for (const message of splitMessages(completion.message)) {
-    await channel.send(message);
-  }
+  await channel.send(completion.message);
 }
 
 export default new DiscordEvent(
@@ -144,13 +146,17 @@ async function handleFailedRequest(
 
   await message.delete();
 
-  await channel.send({
+  const embed = await channel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(Colors.Red)
-        .setTitle('Unable to complete your request')
+        .setTitle('Failed to generate a resposne')
         .setDescription(error instanceof Error ? error.message : error)
         .setFields({ name: 'Message', value: messageContent }),
     ],
   });
+
+  delay(async () => {
+    await embed.delete();
+  }, 5000);
 }

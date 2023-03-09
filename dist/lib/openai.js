@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isTextFlagged = exports.createImage = exports.createChatCompletion = exports.CompletionStatus = void 0;
 const tslib_1 = require("tslib");
 const axios_1 = tslib_1.__importDefault(require("axios"));
+const lodash_1 = require("lodash");
 const openai_1 = require("openai");
 const config_1 = tslib_1.__importDefault(require("../config"));
 const configuration = new openai_1.Configuration({ apiKey: config_1.default.openai.api_key });
@@ -30,7 +31,7 @@ async function createChatCompletion(messages) {
         if (message) {
             return {
                 status: CompletionStatus.Ok,
-                message: message.content.trim(),
+                message: (0, lodash_1.truncate)(message.content.trim(), { length: 2000 }),
             };
         }
     }

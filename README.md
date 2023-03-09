@@ -14,18 +14,18 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 > This is a work in progress. Feel free to contribute!
 
 - [ ] Closable Threads
+- [ ] Message Moderation
 - [x] ~Image Generation~
 - [x] ~Rate Limiting~
-- [x] ~Message Moderation~
 - [x] ~Thread Pruning~
 
 ## Features
 
 - Configurable bot instructions
 - Remembers previous messages in threads
+- Ability to regenerate responses
 - Image generation using DALL·E via `/image`
 - Rate limiting per user to prevent abuse
-- Message moderation and filtering
 - Automatic thread pruning
 
 ## Get Started

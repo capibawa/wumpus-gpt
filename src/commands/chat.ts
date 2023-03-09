@@ -11,10 +11,10 @@ import {
 import truncate from 'lodash/truncate';
 
 import config from '@/config';
+import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import {
   destroyThread,
   generateChatMessages,
-  splitMessages,
   validateMessage,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
@@ -151,9 +151,10 @@ export default new DiscordCommand({
 
         await thread.members.add(interaction.user);
 
-        for (const message of splitMessages(completion.message!)) {
-          await thread.send(message);
-        }
+        await thread.send({
+          content: completion.message,
+          components: [createActionRow(createRegenerateButton())],
+        });
 
         await interaction.editReply({
           embeds: [
