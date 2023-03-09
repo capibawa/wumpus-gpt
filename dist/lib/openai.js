@@ -39,7 +39,7 @@ async function createChatCompletion(messages) {
             if (err.response?.data?.error?.code === 'context_length_exceeded') {
                 return {
                     status: CompletionStatus.ContextLengthExceeded,
-                    statusMessage: 'The request has exceeded the token limit. Try again with a shorter message or start another conversation.',
+                    message: 'The request has exceeded the token limit. Try again with a shorter message or start another conversation.',
                 };
             }
             else if (err.response?.data?.error?.type === 'invalid_request_error') {
@@ -47,7 +47,7 @@ async function createChatCompletion(messages) {
                 const error = err.response.data.error;
                 return {
                     status: CompletionStatus.InvalidRequest,
-                    statusMessage: error.message,
+                    message: error.message,
                 };
             }
         }
@@ -55,16 +55,13 @@ async function createChatCompletion(messages) {
             logError(err);
             return {
                 status: CompletionStatus.UnexpectedError,
-                statusMessage: err instanceof Error
-                    ? err.message
-                    : err ||
-                        'There was an unexpected error processing your request.',
+                message: err instanceof Error ? err.message : err,
             };
         }
     }
     return {
         status: CompletionStatus.UnexpectedError,
-        statusMessage: 'There was an unexpected error processing your request.',
+        message: 'There was an unexpected error processing your request.',
     };
 }
 exports.createChatCompletion = createChatCompletion;

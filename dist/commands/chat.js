@@ -73,7 +73,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             if (completion.status !== openai_1.CompletionStatus.Ok) {
                 await interaction.editReply({
                     embeds: [
-                        getErrorEmbed(interaction.user, message, behavior, completion.statusMessage),
+                        getErrorEmbed(interaction.user, message, behavior, completion.message),
                     ],
                 });
                 return;

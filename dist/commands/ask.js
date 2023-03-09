@@ -58,7 +58,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
             await interaction.editReply(completion.status === openai_1.CompletionStatus.Ok
                 ? (0, lodash_1.truncate)(completion.message, { length: 2000 })
-                : completion.statusMessage);
+                : completion.message);
         });
         if (!executed) {
             await interaction.reply({

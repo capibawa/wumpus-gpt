@@ -54,7 +54,7 @@ async function handleThreadMessage(
     );
 
     if (completion.status !== CompletionStatus.Ok) {
-      handleFailedRequest(channel, message, completion.statusMessage!);
+      handleFailedRequest(channel, message, completion.message);
 
       return;
     }
@@ -63,7 +63,7 @@ async function handleThreadMessage(
       return;
     }
 
-    for (const message of splitMessages(completion.message!)) {
+    for (const message of splitMessages(completion.message)) {
       await channel.send(message);
     }
   }, 2000);
@@ -88,12 +88,12 @@ async function handleDirectMessage(
   const completion = await createChatCompletion(generateChatMessages(message));
 
   if (completion.status !== CompletionStatus.Ok) {
-    await message.reply(completion.statusMessage!);
+    await message.reply(completion.message);
 
     return;
   }
 
-  for (const message of splitMessages(completion.message!)) {
+  for (const message of splitMessages(completion.message)) {
     await channel.send(message);
   }
 }

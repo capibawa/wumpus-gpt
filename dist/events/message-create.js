@@ -27,7 +27,7 @@ async function handleThreadMessage(client, channel, message) {
         const messages = await channel.messages.fetch({ before: message.id });
         const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
-            handleFailedRequest(channel, message, completion.statusMessage);
+            handleFailedRequest(channel, message, completion.message);
             return;
         }
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
@@ -49,7 +49,7 @@ async function handleDirectMessage(client, channel, message) {
     await channel.sendTyping();
     const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
     if (completion.status !== openai_1.CompletionStatus.Ok) {
-        await message.reply(completion.statusMessage);
+        await message.reply(completion.message);
         return;
     }
     for (const message of (0, helpers_1.splitMessages)(completion.message)) {

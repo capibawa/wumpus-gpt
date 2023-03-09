@@ -104,7 +104,7 @@ export default new DiscordCommand({
               interaction.user,
               message!,
               behavior,
-              completion.statusMessage
+              completion.message
             ),
           ],
         });

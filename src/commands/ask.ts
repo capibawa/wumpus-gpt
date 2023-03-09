@@ -69,7 +69,7 @@ export default new DiscordCommand({
       await interaction.editReply(
         completion.status === CompletionStatus.Ok
           ? truncate(completion.message!, { length: 2000 })
-          : completion.statusMessage!
+          : completion.message
       );
     });
 
