@@ -61,7 +61,7 @@ client.on('ready', async () => {
 
   await moduleLoader.updateSlashCommands();
 
-  Cron('* * * * *', async () => {
+  const job = Cron('* * * * *', async () => {
     await pruneThreads(client);
   });
 
@@ -69,6 +69,8 @@ client.on('ready', async () => {
   console.log(
     `You can invite this bot with the following URL: ${config.bot.invite_url}\n`
   );
+
+  await job.trigger();
 });
 
 prisma

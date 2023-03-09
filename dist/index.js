@@ -41,11 +41,12 @@ client.on('ready', async () => {
         console.warn('No events were found.');
     }
     await moduleLoader.updateSlashCommands();
-    (0, croner_1.default)('* * * * *', async () => {
+    const job = (0, croner_1.default)('* * * * *', async () => {
         await (0, prune_threads_1.default)(client);
     });
     console.log(`\nLogged in as ${client.user.tag}!`);
     console.log(`You can invite this bot with the following URL: ${config_1.default.bot.invite_url}\n`);
+    await job.trigger();
 });
 prisma_1.default
     .$connect()
