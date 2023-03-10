@@ -1,10 +1,10 @@
 import { DiscordCommand } from 'discord-module-loader';
 import {
   ApplicationCommandOptionType,
+  ChannelType,
   Colors,
   EmbedBuilder,
   Interaction,
-  TextChannel,
   ThreadChannel,
   User,
 } from 'discord.js';
@@ -77,7 +77,7 @@ export default new DiscordCommand({
 
     const channel = interaction.channel;
 
-    if (!channel || !(channel instanceof TextChannel)) {
+    if (!channel || channel.type !== ChannelType.GuildText) {
       await interaction.reply({
         content: "You can't start a conversation here.",
         ephemeral: true,

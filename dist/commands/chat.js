@@ -58,7 +58,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             }
         }
         const channel = interaction.channel;
-        if (!channel || !(channel instanceof discord_js_1.TextChannel)) {
+        if (!channel || channel.type !== discord_js_1.ChannelType.GuildText) {
             await interaction.reply({
                 content: "You can't start a conversation here.",
                 ephemeral: true,
