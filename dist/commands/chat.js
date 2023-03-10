@@ -21,11 +21,13 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 name: 'message',
                 description: 'The message to start the conversation with.',
                 required: true,
+                maxLength: 1024,
             },
             {
                 type: discord_js_1.ApplicationCommandOptionType.String,
                 name: 'behavior',
                 description: 'Specify how the bot should behave.',
+                maxLength: 1024,
             },
         ],
     },

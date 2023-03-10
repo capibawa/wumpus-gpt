@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
-const lodash_1 = require("lodash");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = require("../lib/rate-limiter");
@@ -17,11 +16,13 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 name: 'message',
                 description: 'The message to say to the bot.',
                 required: true,
+                maxLength: 1024,
             },
             {
                 type: discord_js_1.ApplicationCommandOptionType.String,
                 name: 'behavior',
                 description: 'Specify how the bot should behave.',
+                maxLength: 1024,
             },
         ],
     },
@@ -56,9 +57,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
             const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
-            await interaction.editReply(completion.status === openai_1.CompletionStatus.Ok
-                ? (0, lodash_1.truncate)(completion.message, { length: 2000 })
-                : completion.message);
+            await interaction.editReply(completion.message);
         });
         if (!executed) {
             await interaction.reply({

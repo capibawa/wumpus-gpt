@@ -1,9 +1,8 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
-import { truncate } from 'lodash';
 
 import { generateChatMessages, validateMessage } from '@/lib/helpers';
-import { CompletionStatus, createChatCompletion } from '@/lib/openai';
+import { createChatCompletion } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(5, 'minute');
@@ -18,11 +17,13 @@ export default new DiscordCommand({
         name: 'message',
         description: 'The message to say to the bot.',
         required: true,
+        maxLength: 1024,
       },
       {
         type: ApplicationCommandOptionType.String,
         name: 'behavior',
         description: 'Specify how the bot should behave.',
+        maxLength: 1024,
       },
     ],
   },
@@ -66,11 +67,7 @@ export default new DiscordCommand({
         generateChatMessages(message!, behavior)
       );
 
-      await interaction.editReply(
-        completion.status === CompletionStatus.Ok
-          ? truncate(completion.message!, { length: 2000 })
-          : completion.message
-      );
+      await interaction.editReply(completion.message);
     });
 
     if (!executed) {
