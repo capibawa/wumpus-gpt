@@ -125,7 +125,7 @@ export async function detachComponents(
 
 export async function validateMessage(
   message?: string | Message,
-  alias: string = 'message'
+  alias = 'message'
 ): Promise<boolean> {
   message = isString(message) ? message : message?.content;
 

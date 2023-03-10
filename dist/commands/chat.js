@@ -70,7 +70,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
             await interaction.editReply({
-                embeds: [getThreadCreatingEmbed(interaction.user, message, behavior)],
+                embeds: [
+                    getThreadCreatingEmbed(interaction.user, message, behavior),
+                ],
             });
             const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
             if (completion.status !== openai_1.CompletionStatus.Ok) {
@@ -128,7 +130,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             catch (err) {
                 console.error(err);
                 await interaction.editReply({
-                    embeds: [getErrorEmbed(interaction.user, message, behavior)],
+                    embeds: [
+                        getErrorEmbed(interaction.user, message, behavior),
+                    ],
                 });
             }
         });

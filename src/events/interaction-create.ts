@@ -149,7 +149,7 @@ async function handleFailedRequest(
   channel: DMChannel | TextChannel | ThreadChannel,
   message: Message,
   error: string | Error,
-  queueDeletion: boolean = true
+  queueDeletion = true
 ): Promise<void> {
   const content = truncate(message.content, { length: 200 });
 

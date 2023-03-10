@@ -200,7 +200,7 @@ async function handleFailedRequest(
   channel: DMChannel | ThreadChannel,
   message: Message,
   error: string | Error,
-  queueDeletion: boolean = true
+  queueDeletion = true
 ): Promise<void> {
   // if (channel instanceof ThreadChannel) {
   //   try {

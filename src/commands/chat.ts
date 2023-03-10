@@ -92,11 +92,13 @@ export default new DiscordCommand({
       await interaction.deferReply();
 
       await interaction.editReply({
-        embeds: [getThreadCreatingEmbed(interaction.user, message!, behavior)],
+        embeds: [
+          getThreadCreatingEmbed(interaction.user, message as string, behavior),
+        ],
       });
 
       const completion = await createChatCompletion(
-        generateChatMessages(message!, behavior)
+        generateChatMessages(message as string, behavior)
       );
 
       if (completion.status !== CompletionStatus.Ok) {
@@ -104,7 +106,7 @@ export default new DiscordCommand({
           embeds: [
             getErrorEmbed(
               interaction.user,
-              message!,
+              message as string,
               behavior,
               completion.message
             ),
@@ -147,7 +149,7 @@ export default new DiscordCommand({
         await thread.send({
           embeds: [
             new EmbedBuilder().setColor(Colors.Blue).setFields([
-              { name: 'Message', value: message! },
+              { name: 'Message', value: message as string },
               { name: 'Behavior', value: behavior || 'Default' },
             ]),
           ],
@@ -162,14 +164,21 @@ export default new DiscordCommand({
 
         await interaction.editReply({
           embeds: [
-            getThreadCreatedEmbed(thread, interaction.user, message!, behavior),
+            getThreadCreatedEmbed(
+              thread,
+              interaction.user,
+              message as string,
+              behavior
+            ),
           ],
         });
       } catch (err) {
         console.error(err);
 
         await interaction.editReply({
-          embeds: [getErrorEmbed(interaction.user, message!, behavior)],
+          embeds: [
+            getErrorEmbed(interaction.user, message as string, behavior),
+          ],
         });
       }
     });

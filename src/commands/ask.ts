@@ -64,7 +64,7 @@ export default new DiscordCommand({
       await interaction.deferReply();
 
       const completion = await createChatCompletion(
-        generateChatMessages(message!, behavior)
+        generateChatMessages(message as string, behavior)
       );
 
       await interaction.editReply(completion.message);

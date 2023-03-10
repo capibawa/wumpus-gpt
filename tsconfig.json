@@ -1,22 +1,30 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
   "ts-node": {
     "require": ["tsconfig-paths/register"],
     "compilerHost": true,
     "emit": true
   },
   "compilerOptions": {
+    "target": "es2021",
+    "lib": ["es2021"],
     "rootDir": "./src",
     "outDir": "./dist",
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "removeComments": true,
     "sourceMap": false,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "files": ["src/index.ts"],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", ".ts-node", "src/load-modules.ts"]
 }
