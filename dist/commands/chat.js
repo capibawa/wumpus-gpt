@@ -139,6 +139,8 @@ exports.default = new discord_module_loader_1.DiscordCommand({
     },
 });
 function getBaseEmbed(user, message, behavior) {
+    message = (0, truncate_1.default)(message, { length: 200 });
+    behavior = behavior ? (0, truncate_1.default)(behavior, { length: 200 }) : undefined;
     return new discord_js_1.EmbedBuilder()
         .setColor(discord_js_1.Colors.Green)
         .setDescription(`<@${user.id}> has started a conversation! 💬`)

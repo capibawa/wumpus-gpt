@@ -186,6 +186,9 @@ function getBaseEmbed(
   message: string,
   behavior?: string
 ): EmbedBuilder {
+  message = truncate(message, { length: 200 });
+  behavior = behavior ? truncate(behavior, { length: 200 }) : undefined;
+
   return new EmbedBuilder()
     .setColor(Colors.Green)
     .setDescription(`<@${user.id}> has started a conversation! 💬`)
