@@ -1,5 +1,6 @@
 import { DiscordEvent } from 'discord-module-loader';
 import {
+  ChannelType,
   Client,
   Colors,
   DMChannel,
@@ -50,10 +51,10 @@ async function handleThreadMessage(
 
     await channel.sendTyping();
 
-    const threadMessages = await channel.messages.fetch({ before: message.id });
+    const messages = await channel.messages.fetch({ before: message.id });
 
     const completion = await createChatCompletion(
-      generateAllChatMessages(message, threadMessages, client.user.id)
+      generateAllChatMessages(message, messages, client.user.id)
     );
 
     if (completion.status !== CompletionStatus.Ok) {
@@ -66,7 +67,7 @@ async function handleThreadMessage(
       return;
     }
 
-    await detachComponents(threadMessages);
+    await detachComponents(messages, client.user.id);
 
     await channel.send({
       content: completion.message,
@@ -92,7 +93,6 @@ async function handleThreadMessage(
   }, 2000);
 }
 
-// TODO: Retain previous messages with constraints (e.g. 10 messages max).
 async function handleDirectMessage(
   client: Client<true>,
   channel: DMChannel,
@@ -101,22 +101,42 @@ async function handleDirectMessage(
   try {
     await validateMessage(message);
   } catch (err) {
-    await message.reply((err as Error).message);
+    await handleFailedRequest(channel, message, err as Error);
 
     return;
   }
 
-  await channel.sendTyping();
+  delay(async () => {
+    if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+      return;
+    }
 
-  const completion = await createChatCompletion(generateChatMessages(message));
+    await channel.sendTyping();
 
-  if (completion.status !== CompletionStatus.Ok) {
-    await message.reply(completion.message);
+    const messages = await channel.messages.fetch({ before: message.id });
 
-    return;
-  }
+    // TODO: Retain previous messages with constraints (e.g. 10 messages max).
+    const completion = await createChatCompletion(
+      generateChatMessages(message)
+    );
 
-  await channel.send(completion.message);
+    if (completion.status !== CompletionStatus.Ok) {
+      await handleFailedRequest(channel, message, completion.message);
+
+      return;
+    }
+
+    if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+      return;
+    }
+
+    await detachComponents(messages, client.user.id);
+
+    await channel.send({
+      content: completion.message,
+      components: [createActionRow(createRegenerateButton())],
+    });
+  }, 2000);
 }
 
 export default new DiscordEvent(
@@ -136,10 +156,20 @@ export default new DiscordEvent(
 
     const channel = message.channel;
 
-    if (channel.isThread()) {
-      handleThreadMessage(client, channel, message);
-    } else if (channel.isDMBased()) {
-      handleDirectMessage(client, channel as DMChannel, message);
+    switch (channel.type) {
+      case ChannelType.DM:
+        handleDirectMessage(
+          client,
+          channel.partial ? await channel.fetch() : channel,
+          message
+        );
+        break;
+      case ChannelType.PublicThread:
+      case ChannelType.PrivateThread:
+        handleThreadMessage(client, channel, message);
+        break;
+      default:
+        return;
     }
   }
 );
@@ -157,13 +187,15 @@ function isLastMessageStale(
 }
 
 async function handleFailedRequest(
-  channel: ThreadChannel,
+  channel: DMChannel | ThreadChannel,
   message: Message,
   error: string | Error
 ): Promise<void> {
-  const messageContent = truncate(message.content, { length: 100 });
+  if (channel instanceof ThreadChannel) {
+    await message.delete();
+  }
 
-  await message.delete();
+  const content = truncate(message.content, { length: 100 });
 
   const embed = await channel.send({
     embeds: [
@@ -171,7 +203,7 @@ async function handleFailedRequest(
         .setColor(Colors.Red)
         .setTitle('Failed to generate a resposne')
         .setDescription(error instanceof Error ? error.message : error)
-        .setFields({ name: 'Message', value: messageContent }),
+        .setFields({ name: 'Message', value: content }),
     ],
   });
 

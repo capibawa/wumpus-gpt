@@ -74,12 +74,17 @@ function toChatMessage(message, botId) {
     };
 }
 exports.toChatMessage = toChatMessage;
-function detachComponents(messages) {
-    return Promise.all(messages.map((message) => {
-        if (message.components.length) {
-            return message.edit({ components: [] });
-        }
-    }));
+async function detachComponents(messages, botId) {
+    try {
+        await Promise.all(messages.map((message) => {
+            if (message.author.id === botId && message.components.length > 0) {
+                return message.edit({ components: [] });
+            }
+        }));
+    }
+    catch (err) {
+        console.error(err);
+    }
 }
 exports.detachComponents = detachComponents;
 async function validateMessage(message, alias = 'message') {

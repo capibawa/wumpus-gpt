@@ -26,7 +26,7 @@ export function generateChatMessages(
 
 export function generateAllChatMessages(
   message: string | Message,
-  messages: Collection<string, Message<true>>,
+  messages: Collection<string, Message>,
   botId: string
 ): Array<ChatCompletionRequestMessage> {
   if (isEmpty(messages)) {
@@ -106,16 +106,21 @@ export function toChatMessage(
   };
 }
 
-export function detachComponents(
-  messages: Collection<string, Message<true>>
-): Promise<Array<Message<true> | undefined>> {
-  return Promise.all(
-    messages.map((message) => {
-      if (message.components.length) {
-        return message.edit({ components: [] });
-      }
-    })
-  );
+export async function detachComponents(
+  messages: Collection<string, Message>,
+  botId: string
+): Promise<void> {
+  try {
+    await Promise.all(
+      messages.map((message) => {
+        if (message.author.id === botId && message.components.length > 0) {
+          return message.edit({ components: [] });
+        }
+      })
+    );
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 export async function validateMessage(

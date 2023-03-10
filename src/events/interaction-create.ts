@@ -2,7 +2,10 @@ import { EmbedBuilder } from '@discordjs/builders';
 import { DiscordEvent } from 'discord-module-loader';
 import {
   ButtonInteraction,
+  ChannelType,
+  Client,
   Colors,
+  DMChannel,
   Events,
   Interaction,
   Message,
@@ -13,10 +16,102 @@ import { delay, truncate } from 'lodash';
 
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import { generateAllChatMessages, generateChatMessages } from '@/lib/helpers';
-import { CompletionStatus, createChatCompletion } from '@/lib/openai';
+import {
+  CompletionResponse,
+  CompletionStatus,
+  createChatCompletion,
+} from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(5, 'minute');
+
+async function handleRegenerateInteraction(
+  interaction: ButtonInteraction,
+  client: Client<true>,
+  channel: DMChannel | TextChannel | ThreadChannel,
+  message: Message
+) {
+  if (
+    channel.type !== ChannelType.GuildText &&
+    channel.type !== ChannelType.DM &&
+    channel.type !== ChannelType.PublicThread &&
+    channel.type !== ChannelType.PrivateThread
+  ) {
+    return;
+  }
+
+  const executed = rateLimiter.attempt(interaction.user.id, async () => {
+    await message.edit({
+      content: message.content,
+      components: [
+        createActionRow(
+          createRegenerateButton().setLabel('Regenerating...').setDisabled(true)
+        ),
+      ],
+    });
+
+    await interaction.deferUpdate();
+
+    const messages = await channel.messages.fetch({ before: message.id });
+
+    const previousMessage = messages.first();
+
+    if (!previousMessage) {
+      await handleFailedRequest(
+        interaction,
+        channel,
+        message,
+        'Could not find any previous messages.'
+      );
+
+      return;
+    }
+
+    let completion: CompletionResponse;
+
+    if (
+      channel.type === ChannelType.PublicThread ||
+      channel.type === ChannelType.PrivateThread
+    ) {
+      completion = await createChatCompletion(
+        generateAllChatMessages(
+          previousMessage.content,
+          messages,
+          client.user.id
+        )
+      );
+    } else {
+      completion = await createChatCompletion(
+        generateChatMessages(previousMessage.content)
+      );
+    }
+
+    if (completion.status !== CompletionStatus.Ok) {
+      await handleFailedRequest(
+        interaction,
+        channel,
+        message,
+        completion.message
+      );
+
+      return;
+    }
+
+    await interaction.editReply({
+      content: completion.message,
+      components: [createActionRow(createRegenerateButton())],
+    });
+  });
+
+  if (!executed) {
+    await handleFailedRequest(
+      interaction,
+      channel,
+      message,
+      'You are currently being rate limited.'
+    );
+  }
+}
 
 export default new DiscordEvent(
   Events.InteractionCreate,
@@ -31,85 +126,30 @@ export default new DiscordEvent(
       return;
     }
 
-    const client = interaction.client;
-    const message = interaction.message;
-
-    if (interaction.customId === 'regenerate' && channel?.isThread()) {
-      const executed = rateLimiter.attempt(interaction.id, async () => {
-        await message.edit({
-          content: message.content,
-          components: [
-            createActionRow(
-              createRegenerateButton()
-                .setLabel('Regenerating...')
-                .setDisabled(true)
-            ),
-          ],
-        });
-
-        await interaction.deferUpdate();
-
-        const threadMessages = await channel.messages.fetch({
-          before: message.id,
-        });
-
-        const previousMessage = threadMessages.first();
-
-        if (!previousMessage) {
-          await handleFailedRequest(
-            interaction,
-            channel,
-            message,
-            'Could not find any previous messages.'
-          );
-
-          return;
-        }
-
-        const completion = await createChatCompletion(
-          generateAllChatMessages(
-            previousMessage.content,
-            threadMessages,
-            client.user.id
-          )
-        );
-
-        if (completion.status !== CompletionStatus.Ok) {
-          await handleFailedRequest(
-            interaction,
-            channel,
-            message,
-            completion.message
-          );
-
-          return;
-        }
-
-        await interaction.editReply({
-          content: completion.message,
-          components: [createActionRow(createRegenerateButton())],
-        });
-      });
-
-      if (!executed) {
-        await handleFailedRequest(
+    switch (interaction.customId) {
+      case 'regenerate':
+        await handleRegenerateInteraction(
           interaction,
-          channel,
-          message,
-          'You are currently being rate limited.'
+          interaction.client,
+          channel.partial
+            ? await channel.fetch()
+            : (channel as DMChannel | TextChannel | ThreadChannel),
+          interaction.message
         );
-      }
+        break;
+      default:
+        return;
     }
   }
 );
 
 async function handleFailedRequest(
   interaction: ButtonInteraction,
-  channel: TextChannel | ThreadChannel,
+  channel: DMChannel | TextChannel | ThreadChannel,
   message: Message,
   error: string | Error
 ): Promise<void> {
-  const messageContent = truncate(message.content, { length: 100 });
+  const content = truncate(message.content, { length: 100 });
 
   const embed = await channel.send({
     embeds: [
@@ -117,7 +157,7 @@ async function handleFailedRequest(
         .setColor(Colors.Red)
         .setTitle('Failed to regenerate a response')
         .setDescription(error instanceof Error ? error.message : error)
-        .setFields({ name: 'Message', value: messageContent }),
+        .setFields({ name: 'Message', value: content }),
     ],
   });
 

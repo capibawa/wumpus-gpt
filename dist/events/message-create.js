@@ -28,8 +28,8 @@ async function handleThreadMessage(client, channel, message) {
             return;
         }
         await channel.sendTyping();
-        const threadMessages = await channel.messages.fetch({ before: message.id });
-        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, threadMessages, client.user.id));
+        const messages = await channel.messages.fetch({ before: message.id });
+        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
             await handleFailedRequest(channel, message, completion.message);
             return;
@@ -37,7 +37,7 @@ async function handleThreadMessage(client, channel, message) {
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
             return;
         }
-        await (0, helpers_1.detachComponents)(threadMessages);
+        await (0, helpers_1.detachComponents)(messages, client.user.id);
         await channel.send({
             content: completion.message,
             components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
@@ -63,16 +63,29 @@ async function handleDirectMessage(client, channel, message) {
         await (0, helpers_1.validateMessage)(message);
     }
     catch (err) {
-        await message.reply(err.message);
+        await handleFailedRequest(channel, message, err);
         return;
     }
-    await channel.sendTyping();
-    const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
-    if (completion.status !== openai_1.CompletionStatus.Ok) {
-        await message.reply(completion.message);
-        return;
-    }
-    await channel.send(completion.message);
+    (0, lodash_1.delay)(async () => {
+        if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+            return;
+        }
+        await channel.sendTyping();
+        const messages = await channel.messages.fetch({ before: message.id });
+        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
+        if (completion.status !== openai_1.CompletionStatus.Ok) {
+            await handleFailedRequest(channel, message, completion.message);
+            return;
+        }
+        if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+            return;
+        }
+        await (0, helpers_1.detachComponents)(messages, client.user.id);
+        await channel.send({
+            content: completion.message,
+            components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
+        });
+    }, 2000);
 }
 exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.MessageCreate, async (message) => {
     const client = message.client;
@@ -84,11 +97,16 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.M
         return;
     }
     const channel = message.channel;
-    if (channel.isThread()) {
-        handleThreadMessage(client, channel, message);
-    }
-    else if (channel.isDMBased()) {
-        handleDirectMessage(client, channel, message);
+    switch (channel.type) {
+        case discord_js_1.ChannelType.DM:
+            handleDirectMessage(client, channel.partial ? await channel.fetch() : channel, message);
+            break;
+        case discord_js_1.ChannelType.PublicThread:
+        case discord_js_1.ChannelType.PrivateThread:
+            handleThreadMessage(client, channel, message);
+            break;
+        default:
+            return;
     }
 });
 function isLastMessageStale(message, lastMessage, botId) {
@@ -97,15 +115,17 @@ function isLastMessageStale(message, lastMessage, botId) {
         lastMessage.author.id !== botId);
 }
 async function handleFailedRequest(channel, message, error) {
-    const messageContent = (0, lodash_1.truncate)(message.content, { length: 100 });
-    await message.delete();
+    if (channel instanceof discord_js_1.ThreadChannel) {
+        await message.delete();
+    }
+    const content = (0, lodash_1.truncate)(message.content, { length: 100 });
     const embed = await channel.send({
         embeds: [
             new discord_js_1.EmbedBuilder()
                 .setColor(discord_js_1.Colors.Red)
                 .setTitle('Failed to generate a resposne')
                 .setDescription(error instanceof Error ? error.message : error)
-                .setFields({ name: 'Message', value: messageContent }),
+                .setFields({ name: 'Message', value: content }),
         ],
     });
     (0, lodash_1.delay)(async () => {

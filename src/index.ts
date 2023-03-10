@@ -1,6 +1,6 @@
 import Cron from 'croner';
 import ModuleLoader from 'discord-module-loader';
-import { Client, GatewayIntentBits, Partials } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
 import path from 'path';
 
 import config from '@/config';
@@ -23,7 +23,7 @@ const client = new Client({
     // GatewayIntentBits.DirectMessages,
     GatewayIntentBits.MessageContent,
   ],
-  partials: [Partials.Channel],
+  // partials: [Partials.Channel],
 });
 
 client.on('ready', async () => {
