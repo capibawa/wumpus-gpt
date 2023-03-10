@@ -39,7 +39,7 @@ async function handleRegenerateInteraction(interaction, client, channel, message
             completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(previousMessage.content));
         }
         if (completion.status !== openai_1.CompletionStatus.Ok) {
-            await handleFailedRequest(interaction, channel, message, completion.message);
+            await handleFailedRequest(interaction, channel, message, completion.message, completion.status !== openai_1.CompletionStatus.ContextLengthExceeded);
             return;
         }
         await interaction.editReply({
@@ -69,8 +69,8 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.I
             return;
     }
 });
-async function handleFailedRequest(interaction, channel, message, error) {
-    const content = (0, lodash_1.truncate)(message.content, { length: 100 });
+async function handleFailedRequest(interaction, channel, message, error, queueDeletion = true) {
+    const content = (0, lodash_1.truncate)(message.content, { length: 200 });
     const embed = await channel.send({
         embeds: [
             new builders_1.EmbedBuilder()
@@ -92,7 +92,9 @@ async function handleFailedRequest(interaction, channel, message, error) {
             components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
         });
     }
-    (0, lodash_1.delay)(async () => {
-        await embed.delete();
-    }, 5000);
+    if (queueDeletion) {
+        (0, lodash_1.delay)(async () => {
+            await embed.delete();
+        }, 8000);
+    }
 }

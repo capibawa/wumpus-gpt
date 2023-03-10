@@ -58,7 +58,12 @@ async function handleThreadMessage(
     );
 
     if (completion.status !== CompletionStatus.Ok) {
-      await handleFailedRequest(channel, message, completion.message);
+      await handleFailedRequest(
+        channel,
+        message,
+        completion.message,
+        completion.status !== CompletionStatus.ContextLengthExceeded
+      );
 
       return;
     }
@@ -121,7 +126,12 @@ async function handleDirectMessage(
     );
 
     if (completion.status !== CompletionStatus.Ok) {
-      await handleFailedRequest(channel, message, completion.message);
+      await handleFailedRequest(
+        channel,
+        message,
+        completion.message,
+        completion.status !== CompletionStatus.ContextLengthExceeded
+      );
 
       return;
     }
@@ -189,25 +199,32 @@ function isLastMessageStale(
 async function handleFailedRequest(
   channel: DMChannel | ThreadChannel,
   message: Message,
-  error: string | Error
+  error: string | Error,
+  queueDeletion: boolean = true
 ): Promise<void> {
-  if (channel instanceof ThreadChannel) {
-    await message.delete();
-  }
+  // if (channel instanceof ThreadChannel) {
+  //   try {
+  //     await message.delete();
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // }
 
-  const content = truncate(message.content, { length: 100 });
+  const content = truncate(message.content, { length: 200 });
 
   const embed = await channel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(Colors.Red)
-        .setTitle('Failed to generate a resposne')
+        .setTitle('Failed to generate a response')
         .setDescription(error instanceof Error ? error.message : error)
         .setFields({ name: 'Message', value: content }),
     ],
   });
 
-  delay(async () => {
-    await embed.delete();
-  }, 5000);
+  if (queueDeletion) {
+    delay(async () => {
+      await embed.delete();
+    }, 8000);
+  }
 }

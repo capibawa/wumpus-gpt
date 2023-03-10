@@ -31,7 +31,7 @@ async function handleThreadMessage(client, channel, message) {
         const messages = await channel.messages.fetch({ before: message.id });
         const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
-            await handleFailedRequest(channel, message, completion.message);
+            await handleFailedRequest(channel, message, completion.message, completion.status !== openai_1.CompletionStatus.ContextLengthExceeded);
             return;
         }
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
@@ -74,7 +74,7 @@ async function handleDirectMessage(client, channel, message) {
         const messages = await channel.messages.fetch({ before: message.id });
         const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
-            await handleFailedRequest(channel, message, completion.message);
+            await handleFailedRequest(channel, message, completion.message, completion.status !== openai_1.CompletionStatus.ContextLengthExceeded);
             return;
         }
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
@@ -114,21 +114,20 @@ function isLastMessageStale(message, lastMessage, botId) {
         lastMessage.id !== message.id &&
         lastMessage.author.id !== botId);
 }
-async function handleFailedRequest(channel, message, error) {
-    if (channel instanceof discord_js_1.ThreadChannel) {
-        await message.delete();
-    }
-    const content = (0, lodash_1.truncate)(message.content, { length: 100 });
+async function handleFailedRequest(channel, message, error, queueDeletion = true) {
+    const content = (0, lodash_1.truncate)(message.content, { length: 200 });
     const embed = await channel.send({
         embeds: [
             new discord_js_1.EmbedBuilder()
                 .setColor(discord_js_1.Colors.Red)
-                .setTitle('Failed to generate a resposne')
+                .setTitle('Failed to generate a response')
                 .setDescription(error instanceof Error ? error.message : error)
                 .setFields({ name: 'Message', value: content }),
         ],
     });
-    (0, lodash_1.delay)(async () => {
-        await embed.delete();
-    }, 5000);
+    if (queueDeletion) {
+        (0, lodash_1.delay)(async () => {
+            await embed.delete();
+        }, 8000);
+    }
 }

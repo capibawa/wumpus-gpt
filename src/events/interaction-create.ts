@@ -91,7 +91,8 @@ async function handleRegenerateInteraction(
         interaction,
         channel,
         message,
-        completion.message
+        completion.message,
+        completion.status !== CompletionStatus.ContextLengthExceeded
       );
 
       return;
@@ -147,9 +148,10 @@ async function handleFailedRequest(
   interaction: ButtonInteraction,
   channel: DMChannel | TextChannel | ThreadChannel,
   message: Message,
-  error: string | Error
+  error: string | Error,
+  queueDeletion: boolean = true
 ): Promise<void> {
-  const content = truncate(message.content, { length: 100 });
+  const content = truncate(message.content, { length: 200 });
 
   const embed = await channel.send({
     embeds: [
@@ -173,7 +175,9 @@ async function handleFailedRequest(
     });
   }
 
-  delay(async () => {
-    await embed.delete();
-  }, 5000);
+  if (queueDeletion) {
+    delay(async () => {
+      await embed.delete();
+    }, 8000);
+  }
 }
