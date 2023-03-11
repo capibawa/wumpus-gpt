@@ -21,11 +21,10 @@ yarn-error.log*
 
 # local env files
 .env
-.env*.local
+
+# ts-node
+.ts-node
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# ts-node output files
-/.ts-node
