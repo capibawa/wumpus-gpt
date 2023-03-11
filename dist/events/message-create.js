@@ -20,8 +20,8 @@ async function handleThreadMessage(client, channel, message) {
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
             return;
         }
-        await channel.sendTyping();
         const messages = await channel.messages.fetch({ before: message.id });
+        await channel.sendTyping();
         const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
             await handleFailedRequest(channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
@@ -56,8 +56,8 @@ async function handleDirectMessage(client, channel, message) {
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
             return;
         }
-        await channel.sendTyping();
         const messages = await channel.messages.fetch({ before: message.id });
+        await channel.sendTyping();
         const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
             await handleFailedRequest(channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);

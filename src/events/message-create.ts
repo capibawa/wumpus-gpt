@@ -40,9 +40,9 @@ async function handleThreadMessage(
       return;
     }
 
-    await channel.sendTyping();
-
     const messages = await channel.messages.fetch({ before: message.id });
+
+    await channel.sendTyping();
 
     const completion = await createChatCompletion(
       generateAllChatMessages(message, messages, client.user.id)
@@ -99,9 +99,9 @@ async function handleDirectMessage(
       return;
     }
 
-    await channel.sendTyping();
-
     const messages = await channel.messages.fetch({ before: message.id });
+
+    await channel.sendTyping();
 
     // TODO: Retain previous messages with constraints (e.g. 10 messages max).
     const completion = await createChatCompletion(
