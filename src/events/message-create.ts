@@ -18,7 +18,6 @@ import {
   detachComponents,
   generateAllChatMessages,
   generateChatMessages,
-  validateMessage,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import prisma from '@/lib/prisma';
@@ -33,14 +32,6 @@ async function handleThreadMessage(
   }
 
   if (channel.archived || channel.locked || !channel.name.startsWith('💬')) {
-    return;
-  }
-
-  try {
-    await validateMessage(message);
-  } catch (err) {
-    await handleFailedRequest(channel, message, err as Error);
-
     return;
   }
 
@@ -62,7 +53,7 @@ async function handleThreadMessage(
         channel,
         message,
         completion.message,
-        completion.status !== CompletionStatus.ContextLengthExceeded
+        completion.status === CompletionStatus.UnexpectedError
       );
 
       return;
@@ -103,14 +94,6 @@ async function handleDirectMessage(
   channel: DMChannel,
   message: Message
 ) {
-  try {
-    await validateMessage(message);
-  } catch (err) {
-    await handleFailedRequest(channel, message, err as Error);
-
-    return;
-  }
-
   delay(async () => {
     if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
       return;
@@ -130,7 +113,7 @@ async function handleDirectMessage(
         channel,
         message,
         completion.message,
-        completion.status !== CompletionStatus.ContextLengthExceeded
+        completion.status === CompletionStatus.UnexpectedError
       );
 
       return;

@@ -77,9 +77,11 @@ export function generateAllChatMessages(
 export function getSystemMessage(
   message?: string
 ): ChatCompletionRequestMessage {
-  if (message === 'Default') {
-    message = undefined;
+  if (!message || message === 'Default') {
+    message = config.bot.instructions;
   }
+
+  message = message.trim();
 
   if (message && message.slice(-1) !== '.') {
     message += '.';
@@ -87,9 +89,7 @@ export function getSystemMessage(
 
   return {
     role: ChatCompletionRequestMessageRoleEnum.System,
-    content:
-      (message || config.bot.instructions) +
-      ` The current date is ${format(new Date(), 'PPP')}.`,
+    content: message + ` The current date is ${format(new Date(), 'PPP')}.`,
   };
 }
 
@@ -121,27 +121,6 @@ export async function detachComponents(
   } catch (err) {
     console.error(err);
   }
-}
-
-export async function validateMessage(
-  message?: string | Message,
-  alias = 'message'
-): Promise<boolean> {
-  message = isString(message) ? message : message?.content;
-
-  if (!message) {
-    throw new Error(`There was an error processing your ${alias}.`);
-  }
-
-  if (exceedsTokenLimit(message)) {
-    throw new Error(`Your ${alias} is too long, please try shortening it.`);
-  }
-
-  // if (await isTextFlagged(message)) {
-  //   throw new Error(`Your ${alias} has been blocked by moderation.`);
-  // }
-
-  return true;
 }
 
 export async function destroyThread(channel: ThreadChannel): Promise<void> {

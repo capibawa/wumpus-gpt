@@ -30,33 +30,20 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         if (!interaction.isChatInputCommand()) {
             return;
         }
-        const message = interaction.options.getString('message')?.trim();
-        try {
-            await (0, helpers_1.validateMessage)(message);
-        }
-        catch (err) {
+        const input = {
+            message: interaction.options.getString('message')?.trim() ?? '',
+            behavior: interaction.options.getString('behavior')?.trim() ?? '',
+        };
+        if (!input.message) {
             await interaction.reply({
-                content: err.message,
+                content: 'You must provide a message.',
                 ephemeral: true,
             });
             return;
         }
-        const behavior = interaction.options.getString('behavior')?.trim();
-        if (behavior) {
-            try {
-                await (0, helpers_1.validateMessage)(behavior, 'behavior');
-            }
-            catch (err) {
-                await interaction.reply({
-                    content: err.message,
-                    ephemeral: true,
-                });
-                return;
-            }
-        }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
-            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.message, input.behavior));
             await interaction.editReply(completion.message);
         });
         if (!executed) {

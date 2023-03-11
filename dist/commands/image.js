@@ -26,33 +26,31 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const prompt = interaction.options.getString('prompt')?.trim();
         if (!prompt || prompt.length === 0) {
             await interaction.reply({
-                content: 'You must provide a prompt to create an image!',
+                content: 'You must provide a prompt.',
                 ephemeral: true,
             });
             return;
         }
         if (prompt.length > 1000) {
             await interaction.reply({
-                content: 'Your prompt is too long, try shortening it!',
+                content: 'Your prompt is too long, please try shortening it.',
                 ephemeral: true,
             });
             return;
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply();
-            const imageUrl = await (0, openai_1.createImage)(prompt);
-            if (!imageUrl) {
-                await interaction.editReply('There was an error while processing your response.');
-                return;
+            const completion = await (0, openai_1.createImage)(prompt);
+            const messageOptions = {};
+            if (completion.status !== openai_1.CompletionStatus.Ok) {
+                messageOptions.content = completion.message;
             }
-            await interaction.editReply({
-                files: [
-                    {
-                        attachment: imageUrl,
-                        name: 'image.png',
-                    },
-                ],
-            });
+            else {
+                messageOptions.files = [
+                    { attachment: completion.message, name: 'image.png' },
+                ];
+            }
+            await interaction.editReply(messageOptions);
         });
         if (!executed) {
             await interaction.reply({

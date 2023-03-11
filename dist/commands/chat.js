@@ -35,29 +35,16 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         if (!interaction.isChatInputCommand()) {
             return;
         }
-        const message = interaction.options.getString('message')?.trim();
-        try {
-            await (0, helpers_1.validateMessage)(message);
-        }
-        catch (err) {
+        const input = {
+            message: interaction.options.getString('message')?.trim() ?? '',
+            behavior: interaction.options.getString('behavior')?.trim() ?? '',
+        };
+        if (!input.message) {
             await interaction.reply({
-                content: err.message,
+                content: 'You must provide a message.',
                 ephemeral: true,
             });
             return;
-        }
-        const behavior = interaction.options.getString('behavior')?.trim();
-        if (behavior) {
-            try {
-                await (0, helpers_1.validateMessage)(behavior, 'behavior');
-            }
-            catch (err) {
-                await interaction.reply({
-                    content: err.message,
-                    ephemeral: true,
-                });
-                return;
-            }
         }
         const channel = interaction.channel;
         if (!channel || channel.type !== discord_js_1.ChannelType.GuildText) {
@@ -71,21 +58,21 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             await interaction.deferReply();
             await interaction.editReply({
                 embeds: [
-                    getThreadCreatingEmbed(interaction.user, message, behavior),
+                    getThreadCreatingEmbed(interaction.user, input.message, input.behavior),
                 ],
             });
-            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message, behavior));
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.message, input.behavior));
             if (completion.status !== openai_1.CompletionStatus.Ok) {
                 await interaction.editReply({
                     embeds: [
-                        getErrorEmbed(interaction.user, message, behavior, completion.message),
+                        getErrorEmbed(interaction.user, input.message, input.behavior, completion.message),
                     ],
                 });
                 return;
             }
             try {
                 const thread = await channel.threads.create({
-                    name: (0, truncate_1.default)(`💬 ${interaction.user.username} - ${message}`, {
+                    name: (0, truncate_1.default)(`💬 ${interaction.user.username} - ${input.message}`, {
                         length: 100,
                     }),
                     autoArchiveDuration: 60,
@@ -111,8 +98,8 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 await thread.send({
                     embeds: [
                         new discord_js_1.EmbedBuilder().setColor(discord_js_1.Colors.Blue).setFields([
-                            { name: 'Message', value: message },
-                            { name: 'Behavior', value: behavior || 'Default' },
+                            { name: 'Message', value: input.message },
+                            { name: 'Behavior', value: input.behavior || 'Default' },
                         ]),
                     ],
                 });
@@ -123,7 +110,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 });
                 await interaction.editReply({
                     embeds: [
-                        getThreadCreatedEmbed(thread, interaction.user, message, behavior),
+                        getThreadCreatedEmbed(thread, interaction.user, input.message, input.behavior),
                     ],
                 });
             }
@@ -131,7 +118,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 console.error(err);
                 await interaction.editReply({
                     embeds: [
-                        getErrorEmbed(interaction.user, message, behavior),
+                        getErrorEmbed(interaction.user, input.message, input.behavior),
                     ],
                 });
             }

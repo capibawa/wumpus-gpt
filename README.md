@@ -14,7 +14,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 > This is a work in progress. Feel free to contribute!
 
 - [ ] Closable Threads
-- [ ] Message Moderation
+- [x] ~Message Moderation~
 - [x] ~Image Generation~
 - [x] ~Rate Limiting~
 - [x] ~Thread Pruning~
@@ -34,24 +34,27 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 1. Create a MySQL database (I recommend [PlanetScale](https://planetscale.com/) if you don't want to host locally) and fill in `DATABASE_URL`
 1. Create a Discord application at https://discord.com/developers/applications
 1. Go to the Bot tab and click "Add Bot"
-    - Click "Reset Token" and fill in `DISCORD_TOKEN`
-    - Disable "Public Bot" unless you want your bot to be visible to everyone
-    - Enable "Message Content Intent" under "Privileged Gateway Intents"
+   - Click "Reset Token" and fill in `DISCORD_TOKEN`
+   - Disable "Public Bot" unless you want your bot to be visible to everyone
+   - Enable "Message Content Intent" under "Privileged Gateway Intents"
 1. Go to the OAuth2 tab, copy your "Client ID", and fill in `DISCORD_CLIENT_ID`
 1. Go to https://beta.openai.com/account/api-keys, create an API key, and fill in `OPENAI_API_KEY`
 1. Install dependencies and run the bot
-    ```
-    npm install
 
-    # If you are using PlanetScale:
-    npx prisma db push
+   ```
+   npm install
 
-    # Otherwise:
-    npx prisma migrate dev --name init
+   # If you are using PlanetScale:
+   npx prisma db push
 
-    npm start
-    ```
-    You should see an invite URL in the console. Copy and paste it into your browser to add the bot to your server.
+   # Otherwise:
+   npx prisma migrate dev --name init
+
+   npm start
+   ```
+
+   You should see an invite URL in the console. Copy and paste it into your browser to add the bot to your server.
+
 1. Start chatting with the bot via the `/chat` or `/ask` commands
 
 ## License

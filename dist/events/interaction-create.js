@@ -39,7 +39,7 @@ async function handleRegenerateInteraction(interaction, client, channel, message
             completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(previousMessage.content));
         }
         if (completion.status !== openai_1.CompletionStatus.Ok) {
-            await handleFailedRequest(interaction, channel, message, completion.message, completion.status !== openai_1.CompletionStatus.ContextLengthExceeded);
+            await handleFailedRequest(interaction, channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
             return;
         }
         await interaction.editReply({

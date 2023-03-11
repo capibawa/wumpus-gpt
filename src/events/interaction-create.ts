@@ -92,7 +92,7 @@ async function handleRegenerateInteraction(
         channel,
         message,
         completion.message,
-        completion.status !== CompletionStatus.ContextLengthExceeded
+        completion.status === CompletionStatus.UnexpectedError
       );
 
       return;

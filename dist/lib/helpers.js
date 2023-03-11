@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exceedsTokenLimit = exports.getTokensFromText = exports.destroyThread = exports.validateMessage = exports.detachComponents = exports.toChatMessage = exports.getSystemMessage = exports.generateAllChatMessages = exports.generateChatMessages = void 0;
+exports.exceedsTokenLimit = exports.getTokensFromText = exports.destroyThread = exports.detachComponents = exports.toChatMessage = exports.getSystemMessage = exports.generateAllChatMessages = exports.generateChatMessages = void 0;
 const tslib_1 = require("tslib");
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const discord_js_1 = require("discord.js");
@@ -52,16 +52,16 @@ function generateAllChatMessages(message, messages, botId) {
 }
 exports.generateAllChatMessages = generateAllChatMessages;
 function getSystemMessage(message) {
-    if (message === 'Default') {
-        message = undefined;
+    if (!message || message === 'Default') {
+        message = config_1.default.bot.instructions;
     }
+    message = message.trim();
     if (message && message.slice(-1) !== '.') {
         message += '.';
     }
     return {
         role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
-        content: (message || config_1.default.bot.instructions) +
-            ` The current date is ${(0, format_1.default)(new Date(), 'PPP')}.`,
+        content: message + ` The current date is ${(0, format_1.default)(new Date(), 'PPP')}.`,
     };
 }
 exports.getSystemMessage = getSystemMessage;
@@ -87,17 +87,6 @@ async function detachComponents(messages, botId) {
     }
 }
 exports.detachComponents = detachComponents;
-async function validateMessage(message, alias = 'message') {
-    message = (0, lodash_1.isString)(message) ? message : message?.content;
-    if (!message) {
-        throw new Error(`There was an error processing your ${alias}.`);
-    }
-    if (exceedsTokenLimit(message)) {
-        throw new Error(`Your ${alias} is too long, please try shortening it.`);
-    }
-    return true;
-}
-exports.validateMessage = validateMessage;
 async function destroyThread(channel) {
     await channel.delete();
     const starterMessage = await channel.fetchStarterMessage();

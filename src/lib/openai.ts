@@ -1,11 +1,6 @@
 import axios from 'axios';
 import { truncate } from 'lodash';
-import {
-  ChatCompletionRequestMessage,
-  Configuration,
-  CreateModerationRequestInput,
-  OpenAIApi,
-} from 'openai';
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 
 import config from '@/config';
 
@@ -43,10 +38,41 @@ export async function createChatCompletion(
   //   );
   // }
 
+  const safeMessages = [];
+
   try {
+    const moderation = await openai.createModeration({
+      input: messages
+        .filter((message) => message.role === 'user')
+        .map((message) => message.content),
+    });
+
+    const results = moderation.data.results;
+
+    // If the latest message is flagged, return a message to the user.
+    if (results[results.length - 1].flagged) {
+      return {
+        status: CompletionStatus.Moderated,
+        message: 'Your message has been blocked by moderation.',
+      };
+    }
+
+    // Otherwise, filter out any flagged messages.
+    let userIndex = 0;
+
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+
+      if (message.role === 'user' && results[userIndex++].flagged) {
+        continue;
+      }
+
+      safeMessages.push(message);
+    }
+
     const completion = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
-      messages,
+      messages: safeMessages,
       temperature: Number(config.openai.temperature),
       top_p: Number(config.openai.top_p),
       frequency_penalty: Number(config.openai.frequency_penalty),
@@ -64,16 +90,16 @@ export async function createChatCompletion(
     }
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      if (err.response?.data?.error?.code === 'context_length_exceeded') {
+      const error = err.response?.data?.error;
+
+      if (error && error.code === 'context_length_exceeded') {
         return {
           status: CompletionStatus.ContextLengthExceeded,
           message:
             'The request has exceeded the token limit. Try again with a shorter message or start another conversation.',
         };
-      } else if (err.response?.data?.error?.type === 'invalid_request_error') {
+      } else if (error && error.type === 'invalid_request_error') {
         logError(err);
-
-        const error = err.response.data.error;
 
         return {
           status: CompletionStatus.InvalidRequest,
@@ -96,38 +122,65 @@ export async function createChatCompletion(
   };
 }
 
-export async function createImage(prompt: string): Promise<string> {
-  let imageUrl = '';
-
+export async function createImage(prompt: string): Promise<CompletionResponse> {
   try {
+    const moderation = await openai.createModeration({
+      input: prompt,
+    });
+
+    const result = moderation.data.results[0];
+
+    if (result.flagged) {
+      return {
+        status: CompletionStatus.Moderated,
+        message: 'Your prompt has been blocked by moderation.',
+      };
+    }
+
     const image = await openai.createImage({
       prompt,
     });
 
-    imageUrl = image.data.data[0].url || '';
+    const imageUrl = image.data.data[0].url;
+
+    if (imageUrl) {
+      return {
+        status: CompletionStatus.Ok,
+        message: imageUrl,
+      };
+    }
   } catch (err) {
-    logError(err);
+    if (axios.isAxiosError(err)) {
+      const error = err.response?.data?.error;
+
+      if (error && error.code === 'context_length_exceeded') {
+        return {
+          status: CompletionStatus.ContextLengthExceeded,
+          message:
+            'The request has exceeded the token limit. Try again with a shorter message or start another conversation.',
+        };
+      } else if (error && error.type === 'invalid_request_error') {
+        logError(err);
+
+        return {
+          status: CompletionStatus.InvalidRequest,
+          message: error.message,
+        };
+      }
+    } else {
+      logError(err);
+
+      return {
+        status: CompletionStatus.UnexpectedError,
+        message: err instanceof Error ? err.message : (err as string),
+      };
+    }
   }
 
-  return imageUrl;
-}
-
-export async function isTextFlagged(
-  input: CreateModerationRequestInput
-): Promise<boolean> {
-  let flagged = false;
-
-  try {
-    const moderation = await openai.createModeration({
-      input,
-    });
-
-    flagged = moderation.data.results[0].flagged;
-  } catch (err) {
-    logError(err);
-  }
-
-  return flagged;
+  return {
+    status: CompletionStatus.UnexpectedError,
+    message: 'There was an unexpected error processing your request.',
+  };
 }
 
 function logError(err: unknown): void {

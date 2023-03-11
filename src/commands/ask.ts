@@ -1,7 +1,7 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
-import { generateChatMessages, validateMessage } from '@/lib/helpers';
+import { generateChatMessages } from '@/lib/helpers';
 import { createChatCompletion } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
@@ -32,39 +32,25 @@ export default new DiscordCommand({
       return;
     }
 
-    const message = interaction.options.getString('message')?.trim();
+    const input = {
+      message: interaction.options.getString('message')?.trim() ?? '',
+      behavior: interaction.options.getString('behavior')?.trim() ?? '',
+    };
 
-    try {
-      await validateMessage(message);
-    } catch (err) {
+    if (!input.message) {
       await interaction.reply({
-        content: (err as Error).message,
+        content: 'You must provide a message.',
         ephemeral: true,
       });
 
       return;
     }
 
-    const behavior = interaction.options.getString('behavior')?.trim();
-
-    if (behavior) {
-      try {
-        await validateMessage(behavior, 'behavior');
-      } catch (err) {
-        await interaction.reply({
-          content: (err as Error).message,
-          ephemeral: true,
-        });
-
-        return;
-      }
-    }
-
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.deferReply();
 
       const completion = await createChatCompletion(
-        generateChatMessages(message as string, behavior)
+        generateChatMessages(input.message, input.behavior)
       );
 
       await interaction.editReply(completion.message);

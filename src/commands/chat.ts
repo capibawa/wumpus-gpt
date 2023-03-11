@@ -12,11 +12,7 @@ import truncate from 'lodash/truncate';
 
 import config from '@/config';
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
-import {
-  destroyThread,
-  generateChatMessages,
-  validateMessage,
-} from '@/lib/helpers';
+import { destroyThread, generateChatMessages } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import prisma from '@/lib/prisma';
 import { RateLimiter } from '@/lib/rate-limiter';
@@ -49,32 +45,18 @@ export default new DiscordCommand({
       return;
     }
 
-    const message = interaction.options.getString('message')?.trim();
+    const input = {
+      message: interaction.options.getString('message')?.trim() ?? '',
+      behavior: interaction.options.getString('behavior')?.trim() ?? '',
+    };
 
-    try {
-      await validateMessage(message);
-    } catch (err) {
+    if (!input.message) {
       await interaction.reply({
-        content: (err as Error).message,
+        content: 'You must provide a message.',
         ephemeral: true,
       });
 
       return;
-    }
-
-    const behavior = interaction.options.getString('behavior')?.trim();
-
-    if (behavior) {
-      try {
-        await validateMessage(behavior, 'behavior');
-      } catch (err) {
-        await interaction.reply({
-          content: (err as Error).message,
-          ephemeral: true,
-        });
-
-        return;
-      }
     }
 
     const channel = interaction.channel;
@@ -93,12 +75,16 @@ export default new DiscordCommand({
 
       await interaction.editReply({
         embeds: [
-          getThreadCreatingEmbed(interaction.user, message as string, behavior),
+          getThreadCreatingEmbed(
+            interaction.user,
+            input.message,
+            input.behavior
+          ),
         ],
       });
 
       const completion = await createChatCompletion(
-        generateChatMessages(message as string, behavior)
+        generateChatMessages(input.message, input.behavior)
       );
 
       if (completion.status !== CompletionStatus.Ok) {
@@ -106,8 +92,8 @@ export default new DiscordCommand({
           embeds: [
             getErrorEmbed(
               interaction.user,
-              message as string,
-              behavior,
+              input.message,
+              input.behavior,
               completion.message
             ),
           ],
@@ -118,7 +104,7 @@ export default new DiscordCommand({
 
       try {
         const thread = await channel.threads.create({
-          name: truncate(`💬 ${interaction.user.username} - ${message}`, {
+          name: truncate(`💬 ${interaction.user.username} - ${input.message}`, {
             length: 100,
           }),
           autoArchiveDuration: 60,
@@ -149,8 +135,8 @@ export default new DiscordCommand({
         await thread.send({
           embeds: [
             new EmbedBuilder().setColor(Colors.Blue).setFields([
-              { name: 'Message', value: message as string },
-              { name: 'Behavior', value: behavior || 'Default' },
+              { name: 'Message', value: input.message },
+              { name: 'Behavior', value: input.behavior || 'Default' },
             ]),
           ],
         });
@@ -167,8 +153,8 @@ export default new DiscordCommand({
             getThreadCreatedEmbed(
               thread,
               interaction.user,
-              message as string,
-              behavior
+              input.message,
+              input.behavior
             ),
           ],
         });
@@ -177,7 +163,7 @@ export default new DiscordCommand({
 
         await interaction.editReply({
           embeds: [
-            getErrorEmbed(interaction.user, message as string, behavior),
+            getErrorEmbed(interaction.user, input.message, input.behavior),
           ],
         });
       }

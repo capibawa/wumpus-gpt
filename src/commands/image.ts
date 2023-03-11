@@ -1,7 +1,11 @@
 import { DiscordCommand } from 'discord-module-loader';
-import { ApplicationCommandOptionType, Interaction } from 'discord.js';
+import {
+  ApplicationCommandOptionType,
+  Interaction,
+  InteractionEditReplyOptions,
+} from 'discord.js';
 
-import { createImage } from '@/lib/openai';
+import { CompletionStatus, createImage } from '@/lib/openai';
 import { RateLimiter } from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(1, 'minute');
@@ -29,7 +33,7 @@ export default new DiscordCommand({
 
     if (!prompt || prompt.length === 0) {
       await interaction.reply({
-        content: 'You must provide a prompt to create an image!',
+        content: 'You must provide a prompt.',
         ephemeral: true,
       });
 
@@ -38,43 +42,29 @@ export default new DiscordCommand({
 
     if (prompt.length > 1000) {
       await interaction.reply({
-        content: 'Your prompt is too long, try shortening it!',
+        content: 'Your prompt is too long, please try shortening it.',
         ephemeral: true,
       });
 
       return;
     }
 
-    // if (await isTextFlagged(prompt)) {
-    //   await interaction.reply({
-    //     content: 'Your prompt has been blocked by moderation!',
-    //     ephemeral: true,
-    //   });
-
-    //   return;
-    // }
-
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
       await interaction.deferReply();
 
-      const imageUrl = await createImage(prompt);
+      const completion = await createImage(prompt);
 
-      if (!imageUrl) {
-        await interaction.editReply(
-          'There was an error while processing your response.'
-        );
+      const messageOptions: InteractionEditReplyOptions = {};
 
-        return;
+      if (completion.status !== CompletionStatus.Ok) {
+        messageOptions.content = completion.message;
+      } else {
+        messageOptions.files = [
+          { attachment: completion.message, name: 'image.png' },
+        ];
       }
 
-      await interaction.editReply({
-        files: [
-          {
-            attachment: imageUrl,
-            name: 'image.png',
-          },
-        ],
-      });
+      await interaction.editReply(messageOptions);
     });
 
     if (!executed) {
