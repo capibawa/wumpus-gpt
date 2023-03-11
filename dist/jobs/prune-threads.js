@@ -14,9 +14,25 @@ async function pruneThreads(client) {
             },
         });
         for (const conversation of conversations) {
-            const channel = client.channels.cache.get(conversation.channelId);
+            let channel = null;
+            try {
+                channel = await client.channels.fetch(conversation.channelId);
+            }
+            catch (err) {
+                if (err.code !== 10003) {
+                    console.error(err);
+                }
+            }
             if (channel && channel.isThread()) {
-                const message = await channel.parent?.messages.fetch(conversation.interactionId);
+                let message = null;
+                try {
+                    message = await channel.parent?.messages.fetch(conversation.interactionId);
+                }
+                catch (err) {
+                    if (err.code !== 10008) {
+                        console.error(err);
+                    }
+                }
                 if (message && message.embeds.length > 0) {
                     const embed = message.embeds[0];
                     await message.edit({

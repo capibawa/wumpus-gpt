@@ -1,4 +1,4 @@
-import { Client, Colors, EmbedBuilder } from 'discord.js';
+import { Client, Colors, DiscordAPIError, EmbedBuilder } from 'discord.js';
 
 import { destroyThread } from '@/lib/helpers';
 import prisma from '@/lib/prisma';
@@ -16,12 +16,30 @@ export default async function pruneThreads(
     });
 
     for (const conversation of conversations) {
-      const channel = client.channels.cache.get(conversation.channelId);
+      let channel = null;
+
+      try {
+        channel = await client.channels.fetch(conversation.channelId);
+      } catch (err) {
+        // Unknown Channel
+        if ((err as DiscordAPIError).code !== 10003) {
+          console.error(err);
+        }
+      }
 
       if (channel && channel.isThread()) {
-        const message = await channel.parent?.messages.fetch(
-          conversation.interactionId
-        );
+        let message = null;
+
+        try {
+          message = await channel.parent?.messages.fetch(
+            conversation.interactionId
+          );
+        } catch (err) {
+          // Unknown Message
+          if ((err as DiscordAPIError).code !== 10008) {
+            console.error(err);
+          }
+        }
 
         if (message && message.embeds.length > 0) {
           const embed = message.embeds[0];
