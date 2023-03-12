@@ -21,7 +21,7 @@
     "croner": "^6.0.2",
     "date-fns": "^2.29.3",
     "discord-module-loader": "^1.4.0",
-    "discord.js": "^14.7.1",
+    "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
     "gpt3-tokenizer": "^1.1.5",
     "limiter": "^2.1.0",
