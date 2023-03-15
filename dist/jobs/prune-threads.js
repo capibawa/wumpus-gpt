@@ -2,14 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const discord_js_1 = require("discord.js");
+const sequelize_1 = require("sequelize");
 const helpers_1 = require("../lib/helpers");
-const prisma_1 = tslib_1.__importDefault(require("../lib/prisma"));
+const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
 async function pruneThreads(client) {
     try {
-        const conversations = await prisma_1.default.conversation.findMany({
+        const conversations = await conversation_1.default.findAll({
             where: {
                 expiresAt: {
-                    lte: new Date(),
+                    [sequelize_1.Op.lte]: new Date(),
                 },
             },
         });
@@ -47,11 +48,7 @@ async function pruneThreads(client) {
                 }
                 await (0, helpers_1.destroyThread)(channel);
             }
-            await prisma_1.default.conversation.delete({
-                where: {
-                    id: conversation.id,
-                },
-            });
+            await conversation.destroy();
         }
         if (conversations.length > 0) {
             console.log(`Pruned ${conversations.length} expired conversations.`);

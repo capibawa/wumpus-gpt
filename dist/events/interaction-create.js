@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const builders_1 = require("@discordjs/builders");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
@@ -7,8 +8,8 @@ const lodash_1 = require("lodash");
 const buttons_1 = require("../lib/buttons");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
-const rate_limiter_1 = require("../lib/rate-limiter");
-const rateLimiter = new rate_limiter_1.RateLimiter(5, 'minute');
+const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
+const rateLimiter = new rate_limiter_1.default(5, 'minute');
 async function handleRegenerateInteraction(interaction, client, channel, message) {
     if (channel.type !== discord_js_1.ChannelType.GuildText &&
         channel.type !== discord_js_1.ChannelType.DM &&

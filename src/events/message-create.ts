@@ -20,7 +20,7 @@ import {
   generateChatMessages,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
-import prisma from '@/lib/prisma';
+import Conversation from '@/models/conversation';
 
 async function handleThreadMessage(
   client: Client<true>,
@@ -74,14 +74,18 @@ async function handleThreadMessage(
 
     if (pruneInterval > 0) {
       try {
-        await prisma.conversation.update({
-          where: { channelId: channel.id },
-          data: {
+        await Conversation.update(
+          {
             expiresAt: new Date(
               Date.now() + 3600000 * Math.ceil(pruneInterval)
             ),
           },
-        });
+          {
+            where: {
+              channelId: channel.id,
+            },
+          }
+        );
       } catch (err) {
         console.error(err);
       }

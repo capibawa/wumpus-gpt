@@ -8,9 +8,9 @@ const config_1 = tslib_1.__importDefault(require("../config"));
 const buttons_1 = require("../lib/buttons");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
-const prisma_1 = tslib_1.__importDefault(require("../lib/prisma"));
-const rate_limiter_1 = require("../lib/rate-limiter");
-const rateLimiter = new rate_limiter_1.RateLimiter(5, 900000);
+const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
+const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
+const rateLimiter = new rate_limiter_1.default(5, 900000);
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
         name: 'chat',
@@ -82,12 +82,10 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 const pruneInterval = Number(config_1.default.bot.prune_interval);
                 if (pruneInterval > 0) {
                     try {
-                        await prisma_1.default.conversation.create({
-                            data: {
-                                interactionId: (await interaction.fetchReply()).id,
-                                channelId: thread.id,
-                                expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
-                            },
+                        await conversation_1.default.create({
+                            interactionId: (await interaction.fetchReply()).id,
+                            channelId: thread.id,
+                            expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
                         });
                     }
                     catch (err) {
