@@ -113,10 +113,16 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 });
             }
             catch (err) {
-                console.error(err);
+                let error = undefined;
+                if (err.code === 50001) {
+                    error = 'Missing permissions to create threads.';
+                }
+                else {
+                    console.error(err);
+                }
                 await interaction.editReply({
                     embeds: [
-                        getErrorEmbed(interaction.user, input.message, input.behavior),
+                        getErrorEmbed(interaction.user, input.message, input.behavior, error),
                     ],
                 });
             }

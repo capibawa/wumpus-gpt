@@ -3,6 +3,7 @@ import {
   ApplicationCommandOptionType,
   ChannelType,
   Colors,
+  DiscordAPIError,
   EmbedBuilder,
   Interaction,
   ThreadChannel,
@@ -157,11 +158,23 @@ export default new DiscordCommand({
           ],
         });
       } catch (err) {
-        console.error(err);
+        let error = undefined;
+
+        // Missing Access
+        if ((err as DiscordAPIError).code === 50001) {
+          error = 'Missing permissions to create threads.';
+        } else {
+          console.error(err);
+        }
 
         await interaction.editReply({
           embeds: [
-            getErrorEmbed(interaction.user, input.message, input.behavior),
+            getErrorEmbed(
+              interaction.user,
+              input.message,
+              input.behavior,
+              error
+            ),
           ],
         });
       }
