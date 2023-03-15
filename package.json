@@ -13,7 +13,8 @@
     "build": "rimraf dist && tsc && tsc-alias",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts",
-    "format": "eslint src/**/*.ts --fix",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -30,9 +31,9 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.14.191",
-    "@types/node": "^18.15.0",
-    "@typescript-eslint/eslint-plugin": "^5.54.1",
-    "@typescript-eslint/parser": "^5.54.1",
+    "@types/node": "^18.15.3",
+    "@typescript-eslint/eslint-plugin": "^5.55.0",
+    "@typescript-eslint/parser": "^5.55.0",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.7.0",
     "husky": "^8.0.3",

@@ -78,6 +78,6 @@ prisma
   .then(async () => {
     await client.login(config.discord.token);
   })
-  .catch((err) => {
+  .catch((err: unknown) => {
     console.error(err);
   });
