@@ -33,8 +33,8 @@ export default new DiscordCommand({
     }
 
     const input = {
-      message: interaction.options.getString('message')?.trim() ?? '',
-      behavior: interaction.options.getString('behavior')?.trim() ?? '',
+      message: interaction.options.getString('message') ?? '',
+      behavior: interaction.options.getString('behavior') ?? '',
     };
 
     if (!input.message) {

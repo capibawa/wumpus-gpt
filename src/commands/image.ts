@@ -19,8 +19,8 @@ export default new DiscordCommand({
         type: ApplicationCommandOptionType.String,
         name: 'prompt',
         description: 'A text description of the desired image.',
-        maxLength: 1000,
         required: true,
+        maxLength: 1000,
       },
     ],
   },
@@ -29,20 +29,11 @@ export default new DiscordCommand({
       return;
     }
 
-    const prompt = interaction.options.getString('prompt')?.trim();
+    const prompt = interaction.options.getString('prompt');
 
-    if (!prompt || prompt.length === 0) {
+    if (!prompt) {
       await interaction.reply({
         content: 'You must provide a prompt.',
-        ephemeral: true,
-      });
-
-      return;
-    }
-
-    if (prompt.length > 1000) {
-      await interaction.reply({
-        content: 'Your prompt is too long, please try shortening it.',
         ephemeral: true,
       });
 

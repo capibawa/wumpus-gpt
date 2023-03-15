@@ -18,8 +18,7 @@ import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 import Conversation from '@/models/conversation';
 
-// Limited to 5 executions per 15 minutes.
-const rateLimiter = new RateLimiter(5, 900000);
+const rateLimiter = new RateLimiter(5, 900000); // 5 executions every 15 minutes
 
 export default new DiscordCommand({
   command: {
@@ -47,8 +46,8 @@ export default new DiscordCommand({
     }
 
     const input = {
-      message: interaction.options.getString('message')?.trim() ?? '',
-      behavior: interaction.options.getString('behavior')?.trim() ?? '',
+      message: interaction.options.getString('message') ?? '',
+      behavior: interaction.options.getString('behavior') ?? '',
     };
 
     if (!input.message) {
@@ -72,9 +71,7 @@ export default new DiscordCommand({
     }
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
-      await interaction.deferReply();
-
-      await interaction.editReply({
+      await interaction.reply({
         embeds: [
           getThreadCreatingEmbed(
             interaction.user,

@@ -18,7 +18,7 @@ export function generateChatMessages(
   return [
     getSystemMessage(behavior),
     {
-      role: 'user',
+      role: ChatCompletionRequestMessageRoleEnum.User,
       content: isString(message) ? message : message.content,
     },
   ];
@@ -57,7 +57,7 @@ export function generateAllChatMessages(
 
   return [
     getSystemMessage(behavior),
-    { role: 'user', content: prompt },
+    { role: ChatCompletionRequestMessageRoleEnum.User, content: prompt },
     ...messages
       .filter(
         (message) =>
@@ -69,7 +69,7 @@ export function generateAllChatMessages(
       .map((message) => toChatMessage(message, botId))
       .reverse(),
     isString(message)
-      ? { role: 'user', content: message }
+      ? { role: ChatCompletionRequestMessageRoleEnum.User, content: message }
       : toChatMessage(message, botId),
   ];
 }

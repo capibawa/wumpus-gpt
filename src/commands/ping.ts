@@ -11,6 +11,8 @@ export default new DiscordCommand({
       return;
     }
 
-    await interaction.reply('Pong!');
+    const ping = Math.abs(Date.now() - interaction.createdTimestamp);
+
+    await interaction.reply(`Pong! \`Took ${ping}ms\``);
   },
 });
