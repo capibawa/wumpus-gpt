@@ -161,8 +161,9 @@ export default new DiscordCommand({
         let error = undefined;
 
         // Missing Access
-        if ((err as DiscordAPIError).code === 50001) {
-          error = 'Missing permissions to create threads.';
+        if (err instanceof DiscordAPIError && err.code === 50001) {
+          error =
+            'Missing permissions. Ensure that `Manage Threads` is enabled.';
         } else {
           console.error(err);
         }

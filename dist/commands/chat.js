@@ -114,8 +114,9 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             }
             catch (err) {
                 let error = undefined;
-                if (err.code === 50001) {
-                    error = 'Missing permissions to create threads.';
+                if (err instanceof discord_js_1.DiscordAPIError && err.code === 50001) {
+                    error =
+                        'Missing permissions. Ensure that `Manage Threads` is enabled.';
                 }
                 else {
                     console.error(err);

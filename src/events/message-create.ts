@@ -81,9 +81,7 @@ async function handleThreadMessage(
             ),
           },
           {
-            where: {
-              channelId: channel.id,
-            },
+            where: { channelId: channel.id },
           }
         );
       } catch (err) {
