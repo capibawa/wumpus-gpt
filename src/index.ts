@@ -5,7 +5,8 @@ import path from 'path';
 
 import config from '@/config';
 import pruneThreads from '@/jobs/prune-threads';
-import prisma from '@/lib/prisma';
+import sequelize from '@/lib/sequelize';
+import Conversation from '@/models/conversation';
 
 const isDev = process.argv[0].includes('ts-node');
 const modulesDir = isDev ? '../.ts-node' : '../dist';
@@ -73,11 +74,13 @@ client.on('ready', async () => {
   await job.trigger();
 });
 
-prisma
-  .$connect()
+sequelize
+  .authenticate()
   .then(async () => {
+    await Conversation.sync({ alter: process.env.NODE_ENV === 'development' });
+
     await client.login(config.discord.token);
   })
-  .catch((err: unknown) => {
-    console.error(err);
+  .catch((err) => {
+    console.error('Unable to connect to the database:', err);
   });

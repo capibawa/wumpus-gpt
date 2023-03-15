@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
 const openai_1 = require("../lib/openai");
-const rate_limiter_1 = require("../lib/rate-limiter");
-const rateLimiter = new rate_limiter_1.RateLimiter(1, 'minute');
+const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
+const rateLimiter = new rate_limiter_1.default(1, 'minute');
 exports.default = new discord_module_loader_1.DiscordCommand({
     command: {
         name: 'image',

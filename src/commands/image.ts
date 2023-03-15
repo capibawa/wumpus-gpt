@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 
 import { CompletionStatus, createImage } from '@/lib/openai';
-import { RateLimiter } from '@/lib/rate-limiter';
+import RateLimiter from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(1, 'minute');
 

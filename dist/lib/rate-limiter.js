@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RateLimiter = void 0;
 const limiter_1 = require("limiter");
 class RateLimiter {
     constructor(attempts, interval) {
@@ -24,4 +23,4 @@ class RateLimiter {
         return true;
     }
 }
-exports.RateLimiter = RateLimiter;
+exports.default = RateLimiter;

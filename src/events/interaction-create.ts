@@ -21,7 +21,7 @@ import {
   CompletionStatus,
   createChatCompletion,
 } from '@/lib/openai';
-import { RateLimiter } from '@/lib/rate-limiter';
+import RateLimiter from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(5, 'minute');
 

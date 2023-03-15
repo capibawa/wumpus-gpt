@@ -7,7 +7,8 @@ const discord_js_1 = require("discord.js");
 const path_1 = tslib_1.__importDefault(require("path"));
 const config_1 = tslib_1.__importDefault(require("./config"));
 const prune_threads_1 = tslib_1.__importDefault(require("./jobs/prune-threads"));
-const prisma_1 = tslib_1.__importDefault(require("./lib/prisma"));
+const sequelize_1 = tslib_1.__importDefault(require("./lib/sequelize"));
+const conversation_1 = tslib_1.__importDefault(require("./models/conversation"));
 const isDev = process.argv[0].includes('ts-node');
 const modulesDir = isDev ? '../.ts-node' : '../dist';
 if (isDev) {
@@ -47,11 +48,12 @@ client.on('ready', async () => {
     console.log(`You can invite this bot with the following URL: ${config_1.default.bot.invite_url}\n`);
     await job.trigger();
 });
-prisma_1.default
-    .$connect()
+sequelize_1.default
+    .authenticate()
     .then(async () => {
+    await conversation_1.default.sync({ alter: process.env.NODE_ENV === 'development' });
     await client.login(config_1.default.discord.token);
 })
     .catch((err) => {
-    console.error(err);
+    console.error('Unable to connect to the database:', err);
 });

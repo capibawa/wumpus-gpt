@@ -1,16 +1,17 @@
 import { Client, Colors, DiscordAPIError, EmbedBuilder } from 'discord.js';
+import { Op } from 'sequelize';
 
 import { destroyThread } from '@/lib/helpers';
-import prisma from '@/lib/prisma';
+import Conversation from '@/models/conversation';
 
 export default async function pruneThreads(
   client: Client<boolean>
 ): Promise<void> {
   try {
-    const conversations = await prisma.conversation.findMany({
+    const conversations = await Conversation.findAll({
       where: {
         expiresAt: {
-          lte: new Date(),
+          [Op.lte]: new Date(),
         },
       },
     });
@@ -60,11 +61,7 @@ export default async function pruneThreads(
         await destroyThread(channel);
       }
 
-      await prisma.conversation.delete({
-        where: {
-          id: conversation.id,
-        },
-      });
+      await conversation.destroy();
     }
 
     if (conversations.length > 0) {

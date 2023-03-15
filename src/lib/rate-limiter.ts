@@ -1,7 +1,7 @@
 import { RateLimiter as Limiter } from 'limiter';
 import { Interval } from 'limiter/dist/cjs/TokenBucket';
 
-export class RateLimiter {
+class RateLimiter {
   private limiters: { [key: string]: Limiter } = {};
 
   constructor(public attempts: number, public interval?: Interval) {}
@@ -27,3 +27,5 @@ export class RateLimiter {
     return true;
   }
 }
+
+export default RateLimiter;

@@ -14,8 +14,8 @@ import config from '@/config';
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import { destroyThread, generateChatMessages } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
-import prisma from '@/lib/prisma';
-import { RateLimiter } from '@/lib/rate-limiter';
+import RateLimiter from '@/lib/rate-limiter';
+import Conversation from '@/models/conversation';
 
 // Limited to 5 executions per 15 minutes.
 const rateLimiter = new RateLimiter(5, 900000);
@@ -116,14 +116,12 @@ export default new DiscordCommand({
 
         if (pruneInterval > 0) {
           try {
-            await prisma.conversation.create({
-              data: {
-                interactionId: (await interaction.fetchReply()).id,
-                channelId: thread.id,
-                expiresAt: new Date(
-                  Date.now() + 3600000 * Math.ceil(pruneInterval)
-                ),
-              },
+            await Conversation.create({
+              interactionId: (await interaction.fetchReply()).id,
+              channelId: thread.id,
+              expiresAt: new Date(
+                Date.now() + 3600000 * Math.ceil(pruneInterval)
+              ),
             });
           } catch (err) {
             await destroyThread(thread);
