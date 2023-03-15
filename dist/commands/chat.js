@@ -77,7 +77,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     }),
                     autoArchiveDuration: 60,
                     reason: config_1.default.bot.name,
-                    rateLimitPerUser: 1,
+                    rateLimitPerUser: 3,
                 });
                 const pruneInterval = Number(config_1.default.bot.prune_interval);
                 if (pruneInterval > 0) {

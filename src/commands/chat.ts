@@ -110,7 +110,7 @@ export default new DiscordCommand({
           }),
           autoArchiveDuration: 60,
           reason: config.bot.name,
-          rateLimitPerUser: 1,
+          rateLimitPerUser: 3,
         });
 
         const pruneInterval = Number(config.bot.prune_interval);
