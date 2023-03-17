@@ -5,7 +5,7 @@ import { generateChatMessages } from '@/lib/helpers';
 import { createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
-const rateLimiter = new RateLimiter(5, 'minute');
+const rateLimiter = new RateLimiter(3, 'minute');
 
 export default new DiscordCommand({
   command: {
@@ -14,8 +14,8 @@ export default new DiscordCommand({
     options: [
       {
         type: ApplicationCommandOptionType.String,
-        name: 'message',
-        description: 'The message to say to the bot.',
+        name: 'question',
+        description: 'The question to ask the bot.',
         required: true,
         maxLength: 1024,
       },
@@ -33,13 +33,13 @@ export default new DiscordCommand({
     }
 
     const input = {
-      message: interaction.options.getString('message') ?? '',
+      question: interaction.options.getString('question') ?? '',
       behavior: interaction.options.getString('behavior') ?? '',
     };
 
-    if (!input.message) {
+    if (!input.question) {
       await interaction.reply({
-        content: 'You must provide a message.',
+        content: 'You must provide a question.',
         ephemeral: true,
       });
 
@@ -50,7 +50,7 @@ export default new DiscordCommand({
       await interaction.deferReply();
 
       const completion = await createChatCompletion(
-        generateChatMessages(input.message, input.behavior)
+        generateChatMessages(input.question, input.behavior)
       );
 
       await interaction.editReply(completion.message);

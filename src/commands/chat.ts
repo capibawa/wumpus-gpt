@@ -18,7 +18,7 @@ import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 import Conversation from '@/models/conversation';
 
-const rateLimiter = new RateLimiter(5, 900000); // 5 executions every 15 minutes
+const rateLimiter = new RateLimiter(5, 900000);
 
 export default new DiscordCommand({
   command: {

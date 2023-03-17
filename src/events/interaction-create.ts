@@ -23,7 +23,7 @@ import {
 } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
-const rateLimiter = new RateLimiter(5, 'minute');
+const rateLimiter = new RateLimiter(3, 'minute');
 
 async function handleRegenerateInteraction(
   interaction: ButtonInteraction,
@@ -151,28 +151,28 @@ async function handleFailedRequest(
   error: string | Error,
   queueDeletion = true
 ): Promise<void> {
-  const content = truncate(message.content, { length: 200 });
-
   const embed = await channel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(Colors.Red)
         .setTitle('Failed to regenerate a response')
         .setDescription(error instanceof Error ? error.message : error)
-        .setFields({ name: 'Message', value: content }),
+        .setFields({
+          name: 'Message',
+          value: truncate(message.content, { length: 200 }),
+        }),
     ],
   });
 
-  if (!interaction.deferred) {
-    await interaction.update({
-      content: message.content,
-      components: [createActionRow(createRegenerateButton())],
-    });
+  const payload = {
+    content: message.content,
+    components: [createActionRow(createRegenerateButton())],
+  };
+
+  if (interaction.deferred) {
+    await interaction.editReply(payload);
   } else {
-    await interaction.editReply({
-      content: message.content,
-      components: [createActionRow(createRegenerateButton())],
-    });
+    await interaction.update(payload);
   }
 
   if (queueDeletion) {

@@ -9,7 +9,7 @@ const buttons_1 = require("../lib/buttons");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
-const rateLimiter = new rate_limiter_1.default(5, 'minute');
+const rateLimiter = new rate_limiter_1.default(3, 'minute');
 async function handleRegenerateInteraction(interaction, client, channel, message) {
     if (channel.type !== discord_js_1.ChannelType.GuildText &&
         channel.type !== discord_js_1.ChannelType.DM &&
@@ -71,27 +71,27 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.I
     }
 });
 async function handleFailedRequest(interaction, channel, message, error, queueDeletion = true) {
-    const content = (0, lodash_1.truncate)(message.content, { length: 200 });
     const embed = await channel.send({
         embeds: [
             new builders_1.EmbedBuilder()
                 .setColor(discord_js_1.Colors.Red)
                 .setTitle('Failed to regenerate a response')
                 .setDescription(error instanceof Error ? error.message : error)
-                .setFields({ name: 'Message', value: content }),
+                .setFields({
+                name: 'Message',
+                value: (0, lodash_1.truncate)(message.content, { length: 200 }),
+            }),
         ],
     });
-    if (!interaction.deferred) {
-        await interaction.update({
-            content: message.content,
-            components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
-        });
+    const payload = {
+        content: message.content,
+        components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
+    };
+    if (interaction.deferred) {
+        await interaction.editReply(payload);
     }
     else {
-        await interaction.editReply({
-            content: message.content,
-            components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
-        });
+        await interaction.update(payload);
     }
     if (queueDeletion) {
         (0, lodash_1.delay)(async () => {

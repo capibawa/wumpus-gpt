@@ -193,15 +193,16 @@ async function handleFailedRequest(
   //   }
   // }
 
-  const content = truncate(message.content, { length: 200 });
-
   const embed = await channel.send({
     embeds: [
       new EmbedBuilder()
         .setColor(Colors.Red)
         .setTitle('Failed to generate a response')
         .setDescription(error instanceof Error ? error.message : error)
-        .setFields({ name: 'Message', value: content }),
+        .setFields({
+          name: 'Message',
+          value: truncate(message.content, { length: 200 }),
+        }),
     ],
   });
 
