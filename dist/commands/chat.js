@@ -36,8 +36,8 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const input = {
-            message: interaction.options.getString('message')?.trim() ?? '',
-            behavior: interaction.options.getString('behavior')?.trim() ?? '',
+            message: interaction.options.getString('message') ?? '',
+            behavior: interaction.options.getString('behavior') ?? '',
         };
         if (!input.message) {
             await interaction.reply({
@@ -55,8 +55,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
-            await interaction.deferReply();
-            await interaction.editReply({
+            await interaction.reply({
                 embeds: [
                     getThreadCreatingEmbed(interaction.user, input.message, input.behavior),
                 ],

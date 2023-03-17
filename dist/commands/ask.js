@@ -32,8 +32,8 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const input = {
-            message: interaction.options.getString('message')?.trim() ?? '',
-            behavior: interaction.options.getString('behavior')?.trim() ?? '',
+            message: interaction.options.getString('message') ?? '',
+            behavior: interaction.options.getString('behavior') ?? '',
         };
         if (!input.message) {
             await interaction.reply({

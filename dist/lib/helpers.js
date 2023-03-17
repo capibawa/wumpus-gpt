@@ -13,7 +13,7 @@ function generateChatMessages(message, behavior) {
     return [
         getSystemMessage(behavior),
         {
-            role: 'user',
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
             content: (0, lodash_1.isString)(message) ? message : message.content,
         },
     ];
@@ -37,7 +37,7 @@ function generateAllChatMessages(message, messages, botId) {
     }
     return [
         getSystemMessage(behavior),
-        { role: 'user', content: prompt },
+        { role: openai_1.ChatCompletionRequestMessageRoleEnum.User, content: prompt },
         ...messages
             .filter((message) => message.type === discord_js_1.MessageType.Default &&
             message.content &&
@@ -46,7 +46,7 @@ function generateAllChatMessages(message, messages, botId) {
             .map((message) => toChatMessage(message, botId))
             .reverse(),
         (0, lodash_1.isString)(message)
-            ? { role: 'user', content: message }
+            ? { role: openai_1.ChatCompletionRequestMessageRoleEnum.User, content: message }
             : toChatMessage(message, botId),
     ];
 }
@@ -89,9 +89,16 @@ async function detachComponents(messages, botId) {
 exports.detachComponents = detachComponents;
 async function destroyThread(channel) {
     await channel.delete();
-    const starterMessage = await channel.fetchStarterMessage();
-    if (starterMessage) {
-        await starterMessage.delete();
+    try {
+        const starterMessage = await channel.fetchStarterMessage();
+        if (starterMessage) {
+            await starterMessage.delete();
+        }
+    }
+    catch (err) {
+        if (err.code !== 10008) {
+            console.error(err);
+        }
     }
 }
 exports.destroyThread = destroyThread;

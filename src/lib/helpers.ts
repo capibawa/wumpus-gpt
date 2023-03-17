@@ -1,5 +1,11 @@
 import format from 'date-fns/format';
-import { Collection, Message, MessageType, ThreadChannel } from 'discord.js';
+import {
+  Collection,
+  DiscordAPIError,
+  Message,
+  MessageType,
+  ThreadChannel,
+} from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { isEmpty, isString } from 'lodash';
 import {
@@ -126,10 +132,17 @@ export async function detachComponents(
 export async function destroyThread(channel: ThreadChannel): Promise<void> {
   await channel.delete();
 
-  const starterMessage = await channel.fetchStarterMessage();
+  try {
+    const starterMessage = await channel.fetchStarterMessage();
 
-  if (starterMessage) {
-    await starterMessage.delete();
+    if (starterMessage) {
+      await starterMessage.delete();
+    }
+  } catch (err) {
+    // Unknown Message
+    if ((err as DiscordAPIError).code !== 10008) {
+      console.error(err);
+    }
   }
 }
 

@@ -40,9 +40,7 @@ async function handleThreadMessage(client, channel, message) {
             try {
                 await conversation_1.default.update({
                     expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
-                }, {
-                    where: { channelId: channel.id },
-                });
+                }, { where: { channelId: channel.id } });
             }
             catch (err) {
                 console.error(err);

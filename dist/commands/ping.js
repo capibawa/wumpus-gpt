@@ -10,6 +10,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         if (!interaction.isChatInputCommand()) {
             return;
         }
-        await interaction.reply('Pong!');
+        const ping = Math.abs(Date.now() - interaction.createdTimestamp);
+        await interaction.reply(`Pong! \`Took ${ping}ms\``);
     },
 });
