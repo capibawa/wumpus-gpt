@@ -71,8 +71,8 @@ export async function createChatCompletion(
     }
 
     const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
       messages: safeMessages,
+      model: config.openai.model,
       temperature: Number(config.openai.temperature),
       top_p: Number(config.openai.top_p),
       frequency_penalty: Number(config.openai.frequency_penalty),

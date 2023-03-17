@@ -12,7 +12,7 @@ const conversation_1 = tslib_1.__importDefault(require("./models/conversation"))
 const isDev = process.argv[0].includes('ts-node');
 const modulesDir = isDev ? '../.ts-node' : '../dist';
 if (isDev) {
-    require('./load-modules');
+    require('@/load-modules');
 }
 const client = new discord_js_1.Client({
     intents: [

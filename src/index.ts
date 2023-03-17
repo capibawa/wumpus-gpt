@@ -14,7 +14,7 @@ const modulesDir = isDev ? '../.ts-node' : '../dist';
 if (isDev) {
   // Force modules to be emitted during development, as the
   // current module loader does not detect TypeScript files.
-  require('./load-modules');
+  require('@/load-modules');
 }
 
 const client = new Client({

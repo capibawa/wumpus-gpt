@@ -19,6 +19,7 @@ const config = {
     },
     openai: {
         api_key: process.env.OPENAI_API_KEY,
+        model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
         temperature: process.env.OPENAI_TEMPERATURE || 0.7,
         top_p: process.env.OPENAI_TOP_P || 1.0,
         frequency_penalty: process.env.OPENAI_FREQUENCY_PENALTY || 0.0,
