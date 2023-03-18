@@ -110,22 +110,21 @@ export default new DiscordCommand({
           rateLimitPerUser: 3,
         });
 
-        const pruneInterval = Number(config.bot.prune_interval);
+        try {
+          const pruneInterval = Number(config.bot.prune_interval);
 
-        if (pruneInterval > 0) {
-          try {
-            await Conversation.create({
-              interactionId: (await interaction.fetchReply()).id,
-              channelId: thread.id,
-              expiresAt: new Date(
-                Date.now() + 3600000 * Math.ceil(pruneInterval)
-              ),
-            });
-          } catch (err) {
-            await destroyThread(thread);
+          await Conversation.create({
+            channelId: thread.id,
+            messageId: (await interaction.fetchReply()).id,
+            expiresAt:
+              pruneInterval > 0
+                ? new Date(Date.now() + 3600000 * Math.ceil(pruneInterval))
+                : null,
+          });
+        } catch (err) {
+          await destroyThread(thread);
 
-            throw err;
-          }
+          throw err;
         }
 
         await thread.send({

@@ -1,6 +1,6 @@
 # WumpusGPT
 
-WumpusGPT is a Discord chatbot written in TypeScript and powered by OpenAI's `gpt-3.5-turbo` language model.
+WumpusGPT is a Discord chatbot written in TypeScript and powered by OpenAI's `gpt-4` and `gpt-3.5-turbo` language models.
 
 Although WumpusGPT is not quite the same as ChatGPT, they both utilize the same language model so you will yield very similar results.
 
@@ -43,13 +43,6 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 
    ```
    npm install
-
-   # If you are using PlanetScale:
-   npx prisma db push
-
-   # Otherwise:
-   npx prisma migrate dev --name init
-
    npm start
    ```
 

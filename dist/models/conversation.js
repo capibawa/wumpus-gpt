@@ -7,26 +7,23 @@ class Conversation extends sequelize_1.Model {
 }
 Conversation.init({
     id: {
-        type: sequelize_1.DataTypes.INTEGER.UNSIGNED,
-        autoIncrement: true,
-        primaryKey: true,
-    },
-    interactionId: {
-        type: sequelize_1.DataTypes.STRING,
+        type: sequelize_1.DataTypes.UUID,
+        defaultValue: sequelize_1.DataTypes.UUIDV4,
         allowNull: false,
-        unique: true,
+        primaryKey: true,
     },
     channelId: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
         unique: true,
     },
+    messageId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+    },
     expiresAt: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: false,
     },
-}, {
-    sequelize: sequelize_2.default,
-    tableName: 'Conversation',
-});
+}, { sequelize: sequelize_2.default });
 exports.default = Conversation;

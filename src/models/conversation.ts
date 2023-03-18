@@ -3,38 +3,35 @@ import { DataTypes, Model } from 'sequelize';
 import sequelize from '@/lib/sequelize';
 
 class Conversation extends Model {
-  declare id: number;
-  declare interactionId: string;
+  declare id: string;
   declare channelId: string;
-  declare expiresAt: Date;
+  declare messageId: string;
+  declare expiresAt?: Date;
 }
 
 Conversation.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    interactionId: {
-      type: DataTypes.STRING,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
-      unique: true,
+      primaryKey: true,
     },
     channelId: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
+    messageId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
     expiresAt: {
       type: DataTypes.DATE,
-      allowNull: false,
     },
   },
-  {
-    sequelize,
-    tableName: 'Conversation',
-  }
+  { sequelize }
 );
 
 export default Conversation;

@@ -33,7 +33,7 @@ export default async function pruneThreads(
 
         try {
           message = await channel.parent?.messages.fetch(
-            conversation.interactionId
+            conversation.messageId
           );
         } catch (err) {
           // Unknown Message

@@ -78,19 +78,19 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 3,
                 });
-                const pruneInterval = Number(config_1.default.bot.prune_interval);
-                if (pruneInterval > 0) {
-                    try {
-                        await conversation_1.default.create({
-                            interactionId: (await interaction.fetchReply()).id,
-                            channelId: thread.id,
-                            expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
-                        });
-                    }
-                    catch (err) {
-                        await (0, helpers_1.destroyThread)(thread);
-                        throw err;
-                    }
+                try {
+                    const pruneInterval = Number(config_1.default.bot.prune_interval);
+                    await conversation_1.default.create({
+                        channelId: thread.id,
+                        messageId: (await interaction.fetchReply()).id,
+                        expiresAt: pruneInterval > 0
+                            ? new Date(Date.now() + 3600000 * Math.ceil(pruneInterval))
+                            : null,
+                    });
+                }
+                catch (err) {
+                    await (0, helpers_1.destroyThread)(thread);
+                    throw err;
                 }
                 await thread.send({
                     embeds: [

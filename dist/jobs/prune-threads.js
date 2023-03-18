@@ -27,7 +27,7 @@ async function pruneThreads(client) {
             if (channel && channel.isThread()) {
                 let message = null;
                 try {
-                    message = await channel.parent?.messages.fetch(conversation.interactionId);
+                    message = await channel.parent?.messages.fetch(conversation.messageId);
                 }
                 catch (err) {
                     if (err.code !== 10008) {
