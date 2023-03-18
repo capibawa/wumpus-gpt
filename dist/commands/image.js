@@ -18,14 +18,22 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 required: true,
                 maxLength: 1000,
             },
+            {
+                type: discord_js_1.ApplicationCommandOptionType.Boolean,
+                name: 'hidden',
+                description: 'Whether or not the response should be shown.',
+            },
         ],
     },
     execute: async (interaction) => {
         if (!interaction.isChatInputCommand()) {
             return;
         }
-        const prompt = interaction.options.getString('prompt');
-        if (!prompt) {
+        const input = {
+            prompt: interaction.options.getString('prompt') ?? '',
+            hidden: interaction.options.getBoolean('hidden') ?? false,
+        };
+        if (!input.prompt) {
             await interaction.reply({
                 content: 'You must provide a prompt.',
                 ephemeral: true,
@@ -33,8 +41,8 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
-            await interaction.deferReply();
-            const completion = await (0, openai_1.createImage)(prompt);
+            await interaction.deferReply({ ephemeral: input.hidden });
+            const completion = await (0, openai_1.createImage)(input.prompt);
             const messageOptions = {};
             if (completion.status !== openai_1.CompletionStatus.Ok) {
                 messageOptions.content = completion.message;

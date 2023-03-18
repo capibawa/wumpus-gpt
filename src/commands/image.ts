@@ -22,6 +22,11 @@ export default new DiscordCommand({
         required: true,
         maxLength: 1000,
       },
+      {
+        type: ApplicationCommandOptionType.Boolean,
+        name: 'hidden',
+        description: 'Whether or not the response should be shown.',
+      },
     ],
   },
   execute: async (interaction: Interaction) => {
@@ -29,9 +34,12 @@ export default new DiscordCommand({
       return;
     }
 
-    const prompt = interaction.options.getString('prompt');
+    const input = {
+      prompt: interaction.options.getString('prompt') ?? '',
+      hidden: interaction.options.getBoolean('hidden') ?? false,
+    };
 
-    if (!prompt) {
+    if (!input.prompt) {
       await interaction.reply({
         content: 'You must provide a prompt.',
         ephemeral: true,
@@ -41,9 +49,9 @@ export default new DiscordCommand({
     }
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: input.hidden });
 
-      const completion = await createImage(prompt);
+      const completion = await createImage(input.prompt);
 
       const messageOptions: InteractionEditReplyOptions = {};
 

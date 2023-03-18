@@ -25,6 +25,11 @@ export default new DiscordCommand({
         description: 'Specify how the bot should behave.',
         maxLength: 1024,
       },
+      {
+        type: ApplicationCommandOptionType.Boolean,
+        name: 'hidden',
+        description: 'Whether or not the response should be shown.',
+      },
     ],
   },
   execute: async (interaction: Interaction) => {
@@ -35,6 +40,7 @@ export default new DiscordCommand({
     const input = {
       question: interaction.options.getString('question') ?? '',
       behavior: interaction.options.getString('behavior') ?? '',
+      hidden: interaction.options.getBoolean('hidden') ?? false,
     };
 
     if (!input.question) {
@@ -47,7 +53,7 @@ export default new DiscordCommand({
     }
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
-      await interaction.deferReply();
+      await interaction.deferReply({ ephemeral: input.hidden });
 
       const completion = await createChatCompletion(
         generateChatMessages(input.question, input.behavior)
