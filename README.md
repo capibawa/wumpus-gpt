@@ -36,7 +36,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 1. Go to the Bot tab and click "Add Bot"
    - Click "Reset Token" and fill in `DISCORD_TOKEN`
    - Disable "Public Bot" unless you want your bot to be visible to everyone
-   - Enable "Message Content Intent" under "Privileged Gateway Intents"
+   - Enable "Server Members Intent" and "Message Content Intent" under "Privileged Gateway Intents"
 1. Go to the OAuth2 tab, copy your "Client ID", and fill in `DISCORD_CLIENT_ID`
 1. Go to https://beta.openai.com/account/api-keys, create an API key, and fill in `OPENAI_API_KEY`
 1. Install dependencies and run the bot

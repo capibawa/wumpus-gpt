@@ -11,11 +11,16 @@ const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
 const rateLimiter = new rate_limiter_1.default(3, 'minute');
 async function handleRegenerateInteraction(interaction, client, channel, message) {
-    if (channel.type !== discord_js_1.ChannelType.GuildText &&
-        channel.type !== discord_js_1.ChannelType.DM &&
-        channel.type !== discord_js_1.ChannelType.PublicThread &&
-        channel.type !== discord_js_1.ChannelType.PrivateThread) {
-        return;
+    if (channel.type === discord_js_1.ChannelType.PublicThread ||
+        channel.type === discord_js_1.ChannelType.PrivateThread) {
+        const members = await channel.members.fetch();
+        if (!members.has(interaction.user.id)) {
+            await interaction.reply({
+                content: 'You must be a member of this thread to do that.',
+                ephemeral: true,
+            });
+            return;
+        }
     }
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
         await message.edit({
@@ -57,7 +62,11 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.I
         return;
     }
     const channel = interaction.channel;
-    if (!channel) {
+    if (!channel ||
+        (channel.type !== discord_js_1.ChannelType.GuildText &&
+            channel.type !== discord_js_1.ChannelType.DM &&
+            channel.type !== discord_js_1.ChannelType.PublicThread &&
+            channel.type !== discord_js_1.ChannelType.PrivateThread)) {
         return;
     }
     switch (interaction.customId) {

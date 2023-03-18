@@ -32,12 +32,19 @@ async function handleRegenerateInteraction(
   message: Message
 ) {
   if (
-    channel.type !== ChannelType.GuildText &&
-    channel.type !== ChannelType.DM &&
-    channel.type !== ChannelType.PublicThread &&
-    channel.type !== ChannelType.PrivateThread
+    channel.type === ChannelType.PublicThread ||
+    channel.type === ChannelType.PrivateThread
   ) {
-    return;
+    const members = await channel.members.fetch();
+
+    if (!members.has(interaction.user.id)) {
+      await interaction.reply({
+        content: 'You must be a member of this thread to do that.',
+        ephemeral: true,
+      });
+
+      return;
+    }
   }
 
   const executed = rateLimiter.attempt(interaction.user.id, async () => {
@@ -123,7 +130,13 @@ export default new DiscordEvent(
 
     const channel = interaction.channel;
 
-    if (!channel) {
+    if (
+      !channel ||
+      (channel.type !== ChannelType.GuildText &&
+        channel.type !== ChannelType.DM &&
+        channel.type !== ChannelType.PublicThread &&
+        channel.type !== ChannelType.PrivateThread)
+    ) {
       return;
     }
 
