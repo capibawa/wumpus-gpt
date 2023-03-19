@@ -23,7 +23,7 @@ export function createThreadEmbed(
   if (thread) {
     embed.addFields({ name: 'Thread', value: thread.toString() });
   } else {
-    embed.setFooter({ text: 'Creating...' });
+    embed.setFooter({ text: 'Generating response...' });
   }
 
   return embed;
