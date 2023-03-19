@@ -20,7 +20,8 @@ async function pruneThreads(client) {
                 channel = await client.channels.fetch(conversation.channelId);
             }
             catch (err) {
-                if (err.code !== 10003) {
+                if (!(err instanceof discord_js_1.DiscordAPIError &&
+                    err.code !== discord_js_1.RESTJSONErrorCodes.UnknownChannel)) {
                     console.error(err);
                 }
             }
@@ -30,7 +31,8 @@ async function pruneThreads(client) {
                     message = await channel.parent?.messages.fetch(conversation.messageId);
                 }
                 catch (err) {
-                    if (err.code !== 10008) {
+                    if (!(err instanceof discord_js_1.DiscordAPIError &&
+                        err.code !== discord_js_1.RESTJSONErrorCodes.UnknownMessage)) {
                         console.error(err);
                     }
                 }
@@ -40,8 +42,8 @@ async function pruneThreads(client) {
                         embeds: [
                             new discord_js_1.EmbedBuilder()
                                 .setColor(discord_js_1.Colors.Yellow)
-                                .setTitle('Conversation deleted due to inactivity')
-                                .setDescription(embed.description)
+                                .setTitle(embed.title)
+                                .setDescription('Conversation deleted due to inactivity.')
                                 .setFields(embed.fields.filter((field) => field.name !== 'Thread')),
                         ],
                     });
