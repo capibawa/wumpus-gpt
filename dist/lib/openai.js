@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createImage = exports.createChatCompletion = exports.CompletionStatus = void 0;
+exports.createTitleFromMessages = exports.createImage = exports.createChatCompletion = exports.CompletionStatus = void 0;
 const tslib_1 = require("tslib");
 const axios_1 = tslib_1.__importDefault(require("axios"));
 const lodash_1 = require("lodash");
@@ -141,6 +141,42 @@ async function createImage(prompt) {
     };
 }
 exports.createImage = createImage;
+async function createTitleFromMessages(userMessage, assistantMessage) {
+    const messages = [
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
+            content: userMessage,
+        },
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.Assistant,
+            content: assistantMessage,
+        },
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
+            content: 'Describe the nature of our previous messages in less than 6 words.',
+        },
+    ];
+    try {
+        const completion = await openai.createChatCompletion({
+            messages,
+            model: config_1.default.openai.model,
+        });
+        const message = completion.data.choices[0].message;
+        if (message) {
+            let title = message.content.trim();
+            if (title.startsWith('"') && title.endsWith('"')) {
+                title = title.slice(1, -1);
+            }
+            while (title.endsWith('.')) {
+                title = title.slice(0, -1);
+            }
+            return title;
+        }
+    }
+    catch (err) { }
+    return '';
+}
+exports.createTitleFromMessages = createTitleFromMessages;
 function logError(err) {
     if (axios_1.default.isAxiosError(err)) {
         if (err.response) {

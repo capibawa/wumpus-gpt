@@ -8,8 +8,9 @@ import {
   Interaction,
   PermissionsBitField,
   RESTJSONErrorCodes,
+  ThreadAutoArchiveDuration,
 } from 'discord.js';
-import truncate from 'lodash/truncate';
+import { truncate } from 'lodash';
 
 import config from '@/config';
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
@@ -23,7 +24,11 @@ import {
   generateChatMessages,
   validatePermissions,
 } from '@/lib/helpers';
-import { CompletionStatus, createChatCompletion } from '@/lib/openai';
+import {
+  CompletionStatus,
+  createChatCompletion,
+  createTitleFromMessages,
+} from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 import Conversation from '@/models/conversation';
 
@@ -128,10 +133,8 @@ export default new DiscordCommand({
 
       try {
         const thread = await channel.threads.create({
-          name: truncate(`💬 ${interaction.user.username} - ${input.message}`, {
-            length: 100,
-          }),
-          autoArchiveDuration: 60,
+          name: truncate(`💬 ${input.message}`, { length: 100 }),
+          autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
           reason: config.bot.name,
           rateLimitPerUser: 3,
         });
@@ -178,6 +181,15 @@ export default new DiscordCommand({
           await destroyThread(thread);
 
           throw err;
+        }
+
+        const title = await createTitleFromMessages(
+          input.message,
+          completion.message
+        );
+
+        if (title) {
+          await thread.edit({ name: title });
         }
       } catch (err) {
         let error = undefined;

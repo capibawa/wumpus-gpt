@@ -1,6 +1,11 @@
 import axios from 'axios';
 import { truncate } from 'lodash';
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
+import {
+  ChatCompletionRequestMessage,
+  ChatCompletionRequestMessageRoleEnum,
+  Configuration,
+  OpenAIApi,
+} from 'openai';
 
 import config from '@/config';
 
@@ -181,6 +186,52 @@ export async function createImage(prompt: string): Promise<CompletionResponse> {
     status: CompletionStatus.UnexpectedError,
     message: 'There was an unexpected error processing your request.',
   };
+}
+
+export async function createTitleFromMessages(
+  userMessage: string,
+  assistantMessage: string
+): Promise<string> {
+  const messages = [
+    {
+      role: ChatCompletionRequestMessageRoleEnum.User,
+      content: userMessage,
+    },
+    {
+      role: ChatCompletionRequestMessageRoleEnum.Assistant,
+      content: assistantMessage,
+    },
+    {
+      role: ChatCompletionRequestMessageRoleEnum.User,
+      content:
+        'Describe the nature of our previous messages in less than 6 words.',
+    },
+  ];
+
+  try {
+    const completion = await openai.createChatCompletion({
+      messages,
+      model: config.openai.model,
+    });
+
+    const message = completion.data.choices[0].message;
+
+    if (message) {
+      let title = message.content.trim();
+
+      if (title.startsWith('"') && title.endsWith('"')) {
+        title = title.slice(1, -1);
+      }
+
+      while (title.endsWith('.')) {
+        title = title.slice(0, -1);
+      }
+
+      return title;
+    }
+  } catch (err) {}
+
+  return '';
 }
 
 function logError(err: unknown): void {

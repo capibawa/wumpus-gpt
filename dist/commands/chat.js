@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
-const truncate_1 = tslib_1.__importDefault(require("lodash/truncate"));
+const lodash_1 = require("lodash");
 const config_1 = tslib_1.__importDefault(require("../config"));
 const buttons_1 = require("../lib/buttons");
 const embeds_1 = require("../lib/embeds");
@@ -86,10 +86,8 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             }
             try {
                 const thread = await channel.threads.create({
-                    name: (0, truncate_1.default)(`💬 ${interaction.user.username} - ${input.message}`, {
-                        length: 100,
-                    }),
-                    autoArchiveDuration: 60,
+                    name: (0, lodash_1.truncate)(`💬 ${input.message}`, { length: 100 }),
+                    autoArchiveDuration: discord_js_1.ThreadAutoArchiveDuration.OneHour,
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 3,
                 });
@@ -124,6 +122,10 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 catch (err) {
                     await (0, helpers_1.destroyThread)(thread);
                     throw err;
+                }
+                const title = await (0, openai_1.createTitleFromMessages)(input.message, completion.message);
+                if (title) {
+                    await thread.edit({ name: title });
                 }
             }
             catch (err) {
