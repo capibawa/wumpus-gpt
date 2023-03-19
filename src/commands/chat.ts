@@ -153,10 +153,15 @@ export default new DiscordCommand({
 
           await thread.send({
             embeds: [
-              new EmbedBuilder().setColor(Colors.Blue).setFields([
-                { name: 'Message', value: input.message },
-                { name: 'Behavior', value: input.behavior || 'Default' },
-              ]),
+              new EmbedBuilder()
+                .setColor(Colors.Blue)
+                .setFields([
+                  { name: 'Message', value: input.message },
+                  { name: 'Behavior', value: input.behavior || 'Default' },
+                ])
+                .setFooter({
+                  text: 'Deleting this message will break the conversation!',
+                }),
             ],
           });
 
@@ -189,7 +194,7 @@ export default new DiscordCommand({
         );
 
         if (title) {
-          await thread.edit({ name: title });
+          await thread.edit({ name: `💬 ${title}` });
         }
       } catch (err) {
         let error = undefined;

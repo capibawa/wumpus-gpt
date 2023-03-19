@@ -47,8 +47,8 @@ export function generateAllChatMessages(
 
   if (
     !initialMessage ||
-    isEmpty(initialMessage.embeds) ||
-    isEmpty(initialMessage.embeds[0].fields)
+    initialMessage.embeds.length !== 1 ||
+    initialMessage.embeds[0].fields.length !== 2
   ) {
     return generateChatMessages(message);
   }
@@ -168,9 +168,9 @@ export async function detachComponents(
 }
 
 export async function destroyThread(channel: ThreadChannel): Promise<void> {
-  await channel.delete();
-
   try {
+    await channel.delete();
+
     const starterMessage = await channel.fetchStarterMessage();
 
     if (starterMessage) {
@@ -179,6 +179,7 @@ export async function destroyThread(channel: ThreadChannel): Promise<void> {
   } catch (err) {
     if (
       err instanceof DiscordAPIError &&
+      err.code !== RESTJSONErrorCodes.UnknownChannel &&
       err.code !== RESTJSONErrorCodes.UnknownMessage
     ) {
       console.error(err);

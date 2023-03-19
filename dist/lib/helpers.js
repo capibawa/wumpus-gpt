@@ -25,8 +25,8 @@ function generateAllChatMessages(message, messages, botId) {
     }
     const initialMessage = messages.last();
     if (!initialMessage ||
-        (0, lodash_1.isEmpty)(initialMessage.embeds) ||
-        (0, lodash_1.isEmpty)(initialMessage.embeds[0].fields)) {
+        initialMessage.embeds.length !== 1 ||
+        initialMessage.embeds[0].fields.length !== 2) {
         return generateChatMessages(message);
     }
     const embed = initialMessage.embeds[0];
@@ -115,8 +115,8 @@ async function detachComponents(messages, botId) {
 }
 exports.detachComponents = detachComponents;
 async function destroyThread(channel) {
-    await channel.delete();
     try {
+        await channel.delete();
         const starterMessage = await channel.fetchStarterMessage();
         if (starterMessage) {
             await starterMessage.delete();
@@ -124,6 +124,7 @@ async function destroyThread(channel) {
     }
     catch (err) {
         if (err instanceof discord_js_1.DiscordAPIError &&
+            err.code !== discord_js_1.RESTJSONErrorCodes.UnknownChannel &&
             err.code !== discord_js_1.RESTJSONErrorCodes.UnknownMessage) {
             console.error(err);
         }

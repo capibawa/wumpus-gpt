@@ -102,10 +102,15 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     });
                     await thread.send({
                         embeds: [
-                            new discord_js_1.EmbedBuilder().setColor(discord_js_1.Colors.Blue).setFields([
+                            new discord_js_1.EmbedBuilder()
+                                .setColor(discord_js_1.Colors.Blue)
+                                .setFields([
                                 { name: 'Message', value: input.message },
                                 { name: 'Behavior', value: input.behavior || 'Default' },
-                            ]),
+                            ])
+                                .setFooter({
+                                text: 'Deleting this message will break the conversation!',
+                            }),
                         ],
                     });
                     await thread.members.add(interaction.user);
@@ -125,7 +130,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 }
                 const title = await (0, openai_1.createTitleFromMessages)(input.message, completion.message);
                 if (title) {
-                    await thread.edit({ name: title });
+                    await thread.edit({ name: `💬 ${title}` });
                 }
             }
             catch (err) {
