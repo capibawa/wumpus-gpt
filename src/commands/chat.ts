@@ -106,32 +106,32 @@ export default new DiscordCommand({
     }
 
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
-      await interaction.reply({
-        embeds: [
-          createThreadEmbed(interaction.user, input.message, input.behavior),
-        ],
-      });
-
-      const completion = await createChatCompletion(
-        generateChatMessages(input.message, input.behavior)
-      );
-
-      if (completion.status !== CompletionStatus.Ok) {
-        await interaction.editReply({
+      try {
+        await interaction.reply({
           embeds: [
-            createThreadErrorEmbed(
-              interaction.user,
-              input.message,
-              input.behavior,
-              completion.message
-            ),
+            createThreadEmbed(interaction.user, input.message, input.behavior),
           ],
         });
 
-        return;
-      }
+        const completion = await createChatCompletion(
+          generateChatMessages(input.message, input.behavior)
+        );
 
-      try {
+        if (completion.status !== CompletionStatus.Ok) {
+          await interaction.editReply({
+            embeds: [
+              createThreadErrorEmbed(
+                interaction.user,
+                input.message,
+                input.behavior,
+                completion.message
+              ),
+            ],
+          });
+
+          return;
+        }
+
         const thread = await channel.threads.create({
           name: truncate(`💬 ${input.message}`, { length: 100 }),
           autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
@@ -199,28 +199,38 @@ export default new DiscordCommand({
       } catch (err) {
         let error = undefined;
 
-        if (
-          err instanceof DiscordAPIError &&
-          (err.code === RESTJSONErrorCodes.MissingAccess ||
-            err.code === RESTJSONErrorCodes.MissingPermissions)
-        ) {
-          error =
-            'Missing permissions. Ensure that the bot has the following: ' +
-            `${validator.permissions.join(', ')}.`;
+        if (err instanceof DiscordAPIError) {
+          if (
+            err.code === RESTJSONErrorCodes.MissingAccess ||
+            err.code === RESTJSONErrorCodes.MissingPermissions
+          ) {
+            error =
+              'Missing permissions. Ensure that the bot has the following: ' +
+              `${validator.permissions.join(', ')}.`;
+          }
         } else {
           console.error(err);
         }
 
-        await interaction.editReply({
-          embeds: [
-            createThreadErrorEmbed(
-              interaction.user,
-              input.message,
-              input.behavior,
-              error
-            ),
-          ],
-        });
+        if (
+          // It's possible for the interaction message to be deleted
+          // while a completion is being generated.
+          !(
+            err instanceof DiscordAPIError &&
+            err.code === RESTJSONErrorCodes.UnknownMessage
+          )
+        ) {
+          await interaction.editReply({
+            embeds: [
+              createThreadErrorEmbed(
+                interaction.user,
+                input.message,
+                input.behavior,
+                error
+              ),
+            ],
+          });
+        }
       }
     });
 

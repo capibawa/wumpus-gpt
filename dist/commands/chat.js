@@ -70,21 +70,21 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             return;
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
-            await interaction.reply({
-                embeds: [
-                    (0, embeds_1.createThreadEmbed)(interaction.user, input.message, input.behavior),
-                ],
-            });
-            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.message, input.behavior));
-            if (completion.status !== openai_1.CompletionStatus.Ok) {
-                await interaction.editReply({
+            try {
+                await interaction.reply({
                     embeds: [
-                        (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, completion.message),
+                        (0, embeds_1.createThreadEmbed)(interaction.user, input.message, input.behavior),
                     ],
                 });
-                return;
-            }
-            try {
+                const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.message, input.behavior));
+                if (completion.status !== openai_1.CompletionStatus.Ok) {
+                    await interaction.editReply({
+                        embeds: [
+                            (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, completion.message),
+                        ],
+                    });
+                    return;
+                }
                 const thread = await channel.threads.create({
                     name: (0, lodash_1.truncate)(`💬 ${input.message}`, { length: 100 }),
                     autoArchiveDuration: discord_js_1.ThreadAutoArchiveDuration.OneHour,
@@ -135,21 +135,25 @@ exports.default = new discord_module_loader_1.DiscordCommand({
             }
             catch (err) {
                 let error = undefined;
-                if (err instanceof discord_js_1.DiscordAPIError &&
-                    (err.code === discord_js_1.RESTJSONErrorCodes.MissingAccess ||
-                        err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
-                    error =
-                        'Missing permissions. Ensure that the bot has the following: ' +
-                            `${validator.permissions.join(', ')}.`;
+                if (err instanceof discord_js_1.DiscordAPIError) {
+                    if (err.code === discord_js_1.RESTJSONErrorCodes.MissingAccess ||
+                        err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions) {
+                        error =
+                            'Missing permissions. Ensure that the bot has the following: ' +
+                                `${validator.permissions.join(', ')}.`;
+                    }
                 }
                 else {
                     console.error(err);
                 }
-                await interaction.editReply({
-                    embeds: [
-                        (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, error),
-                    ],
-                });
+                if (!(err instanceof discord_js_1.DiscordAPIError &&
+                    err.code === discord_js_1.RESTJSONErrorCodes.UnknownMessage)) {
+                    await interaction.editReply({
+                        embeds: [
+                            (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, error),
+                        ],
+                    });
+                }
             }
         });
         if (!executed) {
