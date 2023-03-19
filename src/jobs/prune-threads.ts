@@ -1,4 +1,10 @@
-import { Client, Colors, DiscordAPIError, EmbedBuilder } from 'discord.js';
+import {
+  Client,
+  Colors,
+  DiscordAPIError,
+  EmbedBuilder,
+  RESTJSONErrorCodes,
+} from 'discord.js';
 import { Op } from 'sequelize';
 
 import { destroyThread } from '@/lib/helpers';
@@ -22,8 +28,12 @@ export default async function pruneThreads(
       try {
         channel = await client.channels.fetch(conversation.channelId);
       } catch (err) {
-        // Unknown Channel
-        if ((err as DiscordAPIError).code !== 10003) {
+        if (
+          !(
+            err instanceof DiscordAPIError &&
+            err.code !== RESTJSONErrorCodes.UnknownChannel
+          )
+        ) {
           console.error(err);
         }
       }
@@ -36,8 +46,12 @@ export default async function pruneThreads(
             conversation.messageId
           );
         } catch (err) {
-          // Unknown Message
-          if ((err as DiscordAPIError).code !== 10008) {
+          if (
+            !(
+              err instanceof DiscordAPIError &&
+              err.code !== RESTJSONErrorCodes.UnknownMessage
+            )
+          ) {
             console.error(err);
           }
         }
@@ -49,8 +63,8 @@ export default async function pruneThreads(
             embeds: [
               new EmbedBuilder()
                 .setColor(Colors.Yellow)
-                .setTitle('Conversation deleted due to inactivity')
-                .setDescription(embed.description)
+                .setTitle(embed.title)
+                .setDescription('Conversation deleted due to inactivity.')
                 .setFields(
                   embed.fields.filter((field) => field.name !== 'Thread')
                 ),
