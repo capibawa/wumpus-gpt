@@ -5,6 +5,7 @@ import {
   InteractionEditReplyOptions,
 } from 'discord.js';
 
+import { createErrorEmbed } from '@/lib/embeds';
 import { CompletionStatus, createImage } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
@@ -41,7 +42,7 @@ export default new DiscordCommand({
 
     if (!input.prompt) {
       await interaction.reply({
-        content: 'You must provide a prompt.',
+        embeds: [createErrorEmbed('You must provide a prompt.')],
         ephemeral: true,
       });
 
@@ -68,7 +69,7 @@ export default new DiscordCommand({
 
     if (!executed) {
       await interaction.reply({
-        content: 'You are currently being rate limited.',
+        embeds: [createErrorEmbed('You are currently being rate limited.')],
         ephemeral: true,
       });
     }

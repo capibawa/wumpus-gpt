@@ -3,11 +3,13 @@ import {
   ChannelType,
   Client,
   Colors,
+  DiscordAPIError,
   DMChannel,
   EmbedBuilder,
   Events,
   Message,
   MessageType,
+  RESTJSONErrorCodes,
   ThreadChannel,
 } from 'discord.js';
 import { delay, isEmpty, truncate } from 'lodash';
@@ -40,40 +42,40 @@ async function handleThreadMessage(
       return;
     }
 
-    const messages = await channel.messages.fetch({ before: message.id });
+    try {
+      const messages = await channel.messages.fetch({ before: message.id });
 
-    await channel.sendTyping();
+      await channel.sendTyping();
 
-    const completion = await createChatCompletion(
-      generateAllChatMessages(message, messages, client.user.id)
-    );
-
-    if (completion.status !== CompletionStatus.Ok) {
-      await handleFailedRequest(
-        channel,
-        message,
-        completion.message,
-        completion.status === CompletionStatus.UnexpectedError
+      const completion = await createChatCompletion(
+        generateAllChatMessages(message, messages, client.user.id)
       );
 
-      return;
-    }
+      if (completion.status !== CompletionStatus.Ok) {
+        await handleFailedRequest(
+          channel,
+          message,
+          completion.message,
+          completion.status === CompletionStatus.UnexpectedError
+        );
 
-    if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
-      return;
-    }
+        return;
+      }
 
-    await detachComponents(messages, client.user.id);
+      if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+        return;
+      }
 
-    await channel.send({
-      content: completion.message,
-      components: [createActionRow(createRegenerateButton())],
-    });
+      await detachComponents(messages, client.user.id);
 
-    const pruneInterval = Number(config.bot.prune_interval);
+      await channel.send({
+        content: completion.message,
+        components: [createActionRow(createRegenerateButton())],
+      });
 
-    if (pruneInterval > 0) {
-      try {
+      const pruneInterval = Number(config.bot.prune_interval);
+
+      if (pruneInterval > 0) {
         await Conversation.update(
           {
             expiresAt: new Date(
@@ -86,7 +88,14 @@ async function handleThreadMessage(
             },
           }
         );
-      } catch (err) {
+      }
+    } catch (err) {
+      if (
+        !(
+          err instanceof DiscordAPIError &&
+          err.code === RESTJSONErrorCodes.MissingPermissions
+        )
+      ) {
         console.error(err);
       }
     }
@@ -186,8 +195,8 @@ function isLastMessageStale(
 async function handleFailedRequest(
   channel: DMChannel | ThreadChannel,
   message: Message,
-  error: string | Error,
-  queueDeletion = true
+  error: string,
+  queueDeletion = false
 ): Promise<void> {
   // if (channel instanceof ThreadChannel) {
   //   try {
@@ -202,7 +211,7 @@ async function handleFailedRequest(
       new EmbedBuilder()
         .setColor(Colors.Red)
         .setTitle('Failed to generate a response')
-        .setDescription(error instanceof Error ? error.message : error)
+        .setDescription(error)
         .setFields({
           name: 'Message',
           value: truncate(message.content, { length: 200 }),

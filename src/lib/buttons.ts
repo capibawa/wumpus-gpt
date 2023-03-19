@@ -14,9 +14,10 @@ export function createActionRow(
   );
 }
 
-export function createRegenerateButton(): ButtonBuilder {
+export function createRegenerateButton(loading = false): ButtonBuilder {
   return new ButtonBuilder()
     .setCustomId('regenerate')
-    .setLabel('Regenerate')
-    .setStyle(ButtonStyle.Secondary);
+    .setLabel(!loading ? 'Regenerate' : 'Regenerating...')
+    .setStyle(ButtonStyle.Secondary)
+    .setDisabled(loading);
 }

@@ -77,7 +77,7 @@ client.on('ready', async () => {
 sequelize
   .authenticate()
   .then(async () => {
-    await Conversation.sync({ alter: true });
+    await Conversation.sync();
 
     await client.login(config.discord.token);
   })

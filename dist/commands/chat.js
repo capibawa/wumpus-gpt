@@ -6,6 +6,7 @@ const discord_js_1 = require("discord.js");
 const truncate_1 = tslib_1.__importDefault(require("lodash/truncate"));
 const config_1 = tslib_1.__importDefault(require("../config"));
 const buttons_1 = require("../lib/buttons");
+const embeds_1 = require("../lib/embeds");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
@@ -35,13 +36,27 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         if (!interaction.isChatInputCommand()) {
             return;
         }
+        const validator = (0, helpers_1.validatePermissions)(interaction.guild?.members.me?.permissions, [
+            discord_js_1.PermissionsBitField.Flags.SendMessages,
+            discord_js_1.PermissionsBitField.Flags.SendMessagesInThreads,
+            discord_js_1.PermissionsBitField.Flags.CreatePublicThreads,
+            discord_js_1.PermissionsBitField.Flags.CreatePrivateThreads,
+            discord_js_1.PermissionsBitField.Flags.ManageThreads,
+            discord_js_1.PermissionsBitField.Flags.ReadMessageHistory,
+        ]);
+        if (validator.fails) {
+            await interaction.reply({
+                embeds: [(0, embeds_1.createErrorEmbed)(validator.message)],
+            });
+            return;
+        }
         const input = {
             message: interaction.options.getString('message') ?? '',
             behavior: interaction.options.getString('behavior') ?? '',
         };
         if (!input.message) {
             await interaction.reply({
-                content: 'You must provide a message.',
+                embeds: [(0, embeds_1.createErrorEmbed)('You must provide a message.')],
                 ephemeral: true,
             });
             return;
@@ -49,7 +64,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const channel = interaction.channel;
         if (!channel || channel.type !== discord_js_1.ChannelType.GuildText) {
             await interaction.reply({
-                content: "You can't start a conversation here.",
+                embeds: [(0, embeds_1.createErrorEmbed)("You can't start a conversation here.")],
                 ephemeral: true,
             });
             return;
@@ -57,14 +72,14 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.reply({
                 embeds: [
-                    getThreadCreatingEmbed(interaction.user, input.message, input.behavior),
+                    (0, embeds_1.createThreadEmbed)(interaction.user, input.message, input.behavior),
                 ],
             });
             const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.message, input.behavior));
             if (completion.status !== openai_1.CompletionStatus.Ok) {
                 await interaction.editReply({
                     embeds: [
-                        getErrorEmbed(interaction.user, input.message, input.behavior, completion.message),
+                        (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, completion.message),
                     ],
                 });
                 return;
@@ -87,80 +102,54 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                             ? new Date(Date.now() + 3600000 * Math.ceil(pruneInterval))
                             : null,
                     });
+                    await thread.send({
+                        embeds: [
+                            new discord_js_1.EmbedBuilder().setColor(discord_js_1.Colors.Blue).setFields([
+                                { name: 'Message', value: input.message },
+                                { name: 'Behavior', value: input.behavior || 'Default' },
+                            ]),
+                        ],
+                    });
+                    await thread.members.add(interaction.user);
+                    await thread.send({
+                        content: completion.message,
+                        components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
+                    });
+                    await interaction.editReply({
+                        embeds: [
+                            (0, embeds_1.createThreadEmbed)(interaction.user, input.message, input.behavior, thread),
+                        ],
+                    });
                 }
                 catch (err) {
                     await (0, helpers_1.destroyThread)(thread);
                     throw err;
                 }
-                await thread.send({
-                    embeds: [
-                        new discord_js_1.EmbedBuilder().setColor(discord_js_1.Colors.Blue).setFields([
-                            { name: 'Message', value: input.message },
-                            { name: 'Behavior', value: input.behavior || 'Default' },
-                        ]),
-                    ],
-                });
-                await thread.members.add(interaction.user);
-                await thread.send({
-                    content: completion.message,
-                    components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
-                });
-                await interaction.editReply({
-                    embeds: [
-                        getThreadCreatedEmbed(thread, interaction.user, input.message, input.behavior),
-                    ],
-                });
             }
             catch (err) {
                 let error = undefined;
-                if (err instanceof discord_js_1.DiscordAPIError && err.code === 50001) {
+                if (err instanceof discord_js_1.DiscordAPIError &&
+                    (err.code === discord_js_1.RESTJSONErrorCodes.MissingAccess ||
+                        err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
                     error =
-                        'Missing permissions. Ensure that `Manage Threads` is enabled.';
+                        'Missing permissions. Ensure that the bot has the following: ' +
+                            `${validator.permissions.join(', ')}.`;
                 }
                 else {
                     console.error(err);
                 }
                 await interaction.editReply({
                     embeds: [
-                        getErrorEmbed(interaction.user, input.message, input.behavior, error),
+                        (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, error),
                     ],
                 });
             }
         });
         if (!executed) {
             await interaction.reply({
-                content: 'You are currently being rate limited.',
+                embeds: [(0, embeds_1.createErrorEmbed)('You are currently being rate limited.')],
                 ephemeral: true,
             });
         }
     },
 });
-function getBaseEmbed(user, message, behavior) {
-    message = (0, truncate_1.default)(message, { length: 200 });
-    behavior = behavior ? (0, truncate_1.default)(behavior, { length: 200 }) : undefined;
-    return new discord_js_1.EmbedBuilder()
-        .setColor(discord_js_1.Colors.Green)
-        .setDescription(`<@${user.id}> has started a conversation! 💬`)
-        .setFields([
-        { name: 'Message', value: message },
-        { name: 'Behavior', value: behavior || 'Default' },
-    ]);
-}
-function getThreadCreatingEmbed(user, message, behavior) {
-    return getBaseEmbed(user, message, behavior).addFields({
-        name: 'Thread',
-        value: 'Creating...',
-    });
-}
-function getThreadCreatedEmbed(thread, user, message, behavior) {
-    return getBaseEmbed(user, message, behavior).addFields({
-        name: 'Thread',
-        value: thread.toString(),
-    });
-}
-function getErrorEmbed(user, message, behavior, error) {
-    return getBaseEmbed(user, message, behavior)
-        .setColor(discord_js_1.Colors.Red)
-        .setTitle('There was an error while creating a thread')
-        .addFields({ name: 'Error', value: error || 'Unknown' });
-}

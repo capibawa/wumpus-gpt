@@ -1,9 +1,13 @@
 import format from 'date-fns/format';
 import {
+  BitFieldResolvable,
   Collection,
   DiscordAPIError,
   Message,
   MessageType,
+  PermissionsBitField,
+  PermissionsString,
+  RESTJSONErrorCodes,
   ThreadChannel,
 } from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -112,6 +116,40 @@ export function toChatMessage(
   };
 }
 
+export function validatePermissions(
+  permissions: Readonly<PermissionsBitField> | undefined,
+  bits: BitFieldResolvable<PermissionsString, bigint>
+): { fails: boolean; message: string; permissions: Array<string> } {
+  const requiredPermissions = new PermissionsBitField([
+    bits,
+    PermissionsBitField.Flags.UseApplicationCommands,
+  ]);
+
+  if (!permissions) {
+    return {
+      fails: true,
+      message: 'Unable to fetch permissions.',
+      permissions: requiredPermissions.toArray(),
+    };
+  }
+
+  const missingPermissions = permissions.missing(requiredPermissions);
+
+  if (missingPermissions.length > 0) {
+    return {
+      fails: true,
+      message: `Missing permissions: ${missingPermissions.join(', ')}.`,
+      permissions: requiredPermissions.toArray(),
+    };
+  }
+
+  return {
+    fails: false,
+    message: '',
+    permissions: requiredPermissions.toArray(),
+  };
+}
+
 export async function detachComponents(
   messages: Collection<string, Message>,
   botId: string
@@ -139,8 +177,10 @@ export async function destroyThread(channel: ThreadChannel): Promise<void> {
       await starterMessage.delete();
     }
   } catch (err) {
-    // Unknown Message
-    if ((err as DiscordAPIError).code !== 10008) {
+    if (
+      err instanceof DiscordAPIError &&
+      err.code !== RESTJSONErrorCodes.UnknownMessage
+    ) {
       console.error(err);
     }
   }

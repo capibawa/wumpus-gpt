@@ -6,10 +6,11 @@ function createActionRow(...components) {
     return new discord_js_1.ActionRowBuilder().addComponents(...components);
 }
 exports.createActionRow = createActionRow;
-function createRegenerateButton() {
+function createRegenerateButton(loading = false) {
     return new discord_js_1.ButtonBuilder()
         .setCustomId('regenerate')
-        .setLabel('Regenerate')
-        .setStyle(discord_js_1.ButtonStyle.Secondary);
+        .setLabel(!loading ? 'Regenerate' : 'Regenerating...')
+        .setStyle(discord_js_1.ButtonStyle.Secondary)
+        .setDisabled(loading);
 }
 exports.createRegenerateButton = createRegenerateButton;

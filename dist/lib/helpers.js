@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.exceedsTokenLimit = exports.getTokensFromText = exports.destroyThread = exports.detachComponents = exports.toChatMessage = exports.getSystemMessage = exports.generateAllChatMessages = exports.generateChatMessages = void 0;
+exports.exceedsTokenLimit = exports.getTokensFromText = exports.destroyThread = exports.detachComponents = exports.validatePermissions = exports.toChatMessage = exports.getSystemMessage = exports.generateAllChatMessages = exports.generateChatMessages = void 0;
 const tslib_1 = require("tslib");
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const discord_js_1 = require("discord.js");
@@ -74,6 +74,33 @@ function toChatMessage(message, botId) {
     };
 }
 exports.toChatMessage = toChatMessage;
+function validatePermissions(permissions, bits) {
+    const requiredPermissions = new discord_js_1.PermissionsBitField([
+        bits,
+        discord_js_1.PermissionsBitField.Flags.UseApplicationCommands,
+    ]);
+    if (!permissions) {
+        return {
+            fails: true,
+            message: 'Unable to fetch permissions.',
+            permissions: requiredPermissions.toArray(),
+        };
+    }
+    const missingPermissions = permissions.missing(requiredPermissions);
+    if (missingPermissions.length > 0) {
+        return {
+            fails: true,
+            message: `Missing permissions: ${missingPermissions.join(', ')}.`,
+            permissions: requiredPermissions.toArray(),
+        };
+    }
+    return {
+        fails: false,
+        message: '',
+        permissions: requiredPermissions.toArray(),
+    };
+}
+exports.validatePermissions = validatePermissions;
 async function detachComponents(messages, botId) {
     try {
         await Promise.all(messages.map((message) => {
@@ -96,7 +123,8 @@ async function destroyThread(channel) {
         }
     }
     catch (err) {
-        if (err.code !== 10008) {
+        if (err instanceof discord_js_1.DiscordAPIError &&
+            err.code !== discord_js_1.RESTJSONErrorCodes.UnknownMessage) {
             console.error(err);
         }
     }

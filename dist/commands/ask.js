@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
+const embeds_1 = require("../lib/embeds");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
@@ -43,7 +44,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         };
         if (!input.question) {
             await interaction.reply({
-                content: 'You must provide a question.',
+                embeds: [(0, embeds_1.createErrorEmbed)('You must provide a question.')],
                 ephemeral: true,
             });
             return;
@@ -51,11 +52,13 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply({ ephemeral: input.hidden });
             const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.question, input.behavior));
-            await interaction.editReply(completion.message);
+            await interaction.editReply(completion.status === openai_1.CompletionStatus.Ok
+                ? { content: completion.message }
+                : { embeds: [(0, embeds_1.createErrorEmbed)(completion.message)] });
         });
         if (!executed) {
             await interaction.reply({
-                content: 'You are currently being rate limited.',
+                embeds: [(0, embeds_1.createErrorEmbed)('You are currently being rate limited.')],
                 ephemeral: true,
             });
         }

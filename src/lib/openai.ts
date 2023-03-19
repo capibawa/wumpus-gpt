@@ -96,7 +96,7 @@ export async function createChatCompletion(
         return {
           status: CompletionStatus.ContextLengthExceeded,
           message:
-            'The request has exceeded the token limit. Try again with a shorter message or start another conversation.',
+            'The request has exceeded the context limit. Try again with a shorter message or start another conversation.',
         };
       } else if (error && error.type === 'invalid_request_error') {
         logError(err);
@@ -118,7 +118,7 @@ export async function createChatCompletion(
 
   return {
     status: CompletionStatus.UnexpectedError,
-    message: 'There was an unexpected error processing your request.',
+    message: 'There was an unexpected error while processing your request.',
   };
 }
 

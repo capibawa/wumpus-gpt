@@ -51,7 +51,7 @@ client.on('ready', async () => {
 sequelize_1.default
     .authenticate()
     .then(async () => {
-    await conversation_1.default.sync({ alter: true });
+    await conversation_1.default.sync();
     await client.login(config_1.default.discord.token);
 })
     .catch((err) => {

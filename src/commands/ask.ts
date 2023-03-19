@@ -1,8 +1,9 @@
 import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
+import { createErrorEmbed } from '@/lib/embeds';
 import { generateChatMessages } from '@/lib/helpers';
-import { createChatCompletion } from '@/lib/openai';
+import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(3, 'minute');
@@ -45,7 +46,7 @@ export default new DiscordCommand({
 
     if (!input.question) {
       await interaction.reply({
-        content: 'You must provide a question.',
+        embeds: [createErrorEmbed('You must provide a question.')],
         ephemeral: true,
       });
 
@@ -59,12 +60,16 @@ export default new DiscordCommand({
         generateChatMessages(input.question, input.behavior)
       );
 
-      await interaction.editReply(completion.message);
+      await interaction.editReply(
+        completion.status === CompletionStatus.Ok
+          ? { content: completion.message }
+          : { embeds: [createErrorEmbed(completion.message)] }
+      );
     });
 
     if (!executed) {
       await interaction.reply({
-        content: 'You are currently being rate limited.',
+        embeds: [createErrorEmbed('You are currently being rate limited.')],
         ephemeral: true,
       });
     }

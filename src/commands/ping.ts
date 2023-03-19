@@ -1,5 +1,5 @@
 import { DiscordCommand } from 'discord-module-loader';
-import { Interaction } from 'discord.js';
+import { Colors, EmbedBuilder, Interaction } from 'discord.js';
 
 export default new DiscordCommand({
   command: {
@@ -13,6 +13,13 @@ export default new DiscordCommand({
 
     const ping = Math.abs(Date.now() - interaction.createdTimestamp);
 
-    await interaction.reply(`Pong! \`Took ${ping}ms\``);
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(Colors.Green)
+          .setTitle('Pong!')
+          .setDescription(`Took ${ping} ms`),
+      ],
+    });
   },
 });

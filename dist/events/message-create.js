@@ -20,24 +20,24 @@ async function handleThreadMessage(client, channel, message) {
         if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
             return;
         }
-        const messages = await channel.messages.fetch({ before: message.id });
-        await channel.sendTyping();
-        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
-        if (completion.status !== openai_1.CompletionStatus.Ok) {
-            await handleFailedRequest(channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
-            return;
-        }
-        if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
-            return;
-        }
-        await (0, helpers_1.detachComponents)(messages, client.user.id);
-        await channel.send({
-            content: completion.message,
-            components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
-        });
-        const pruneInterval = Number(config_1.default.bot.prune_interval);
-        if (pruneInterval > 0) {
-            try {
+        try {
+            const messages = await channel.messages.fetch({ before: message.id });
+            await channel.sendTyping();
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
+            if (completion.status !== openai_1.CompletionStatus.Ok) {
+                await handleFailedRequest(channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
+                return;
+            }
+            if (isLastMessageStale(message, channel.lastMessage, client.user.id)) {
+                return;
+            }
+            await (0, helpers_1.detachComponents)(messages, client.user.id);
+            await channel.send({
+                content: completion.message,
+                components: [(0, buttons_1.createActionRow)((0, buttons_1.createRegenerateButton)())],
+            });
+            const pruneInterval = Number(config_1.default.bot.prune_interval);
+            if (pruneInterval > 0) {
                 await conversation_1.default.update({
                     expiresAt: new Date(Date.now() + 3600000 * Math.ceil(pruneInterval)),
                 }, {
@@ -46,7 +46,10 @@ async function handleThreadMessage(client, channel, message) {
                     },
                 });
             }
-            catch (err) {
+        }
+        catch (err) {
+            if (!(err instanceof discord_js_1.DiscordAPIError &&
+                err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
                 console.error(err);
             }
         }
@@ -101,13 +104,13 @@ function isLastMessageStale(message, lastMessage, botId) {
         lastMessage.id !== message.id &&
         lastMessage.author.id !== botId);
 }
-async function handleFailedRequest(channel, message, error, queueDeletion = true) {
+async function handleFailedRequest(channel, message, error, queueDeletion = false) {
     const embed = await channel.send({
         embeds: [
             new discord_js_1.EmbedBuilder()
                 .setColor(discord_js_1.Colors.Red)
                 .setTitle('Failed to generate a response')
-                .setDescription(error instanceof Error ? error.message : error)
+                .setDescription(error)
                 .setFields({
                 name: 'Message',
                 value: (0, lodash_1.truncate)(message.content, { length: 200 }),
