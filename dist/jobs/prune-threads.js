@@ -21,7 +21,7 @@ async function pruneThreads(client) {
             }
             catch (err) {
                 if (!(err instanceof discord_js_1.DiscordAPIError &&
-                    err.code !== discord_js_1.RESTJSONErrorCodes.UnknownChannel)) {
+                    err.code === discord_js_1.RESTJSONErrorCodes.UnknownChannel)) {
                     console.error(err);
                 }
             }
@@ -32,7 +32,7 @@ async function pruneThreads(client) {
                 }
                 catch (err) {
                     if (!(err instanceof discord_js_1.DiscordAPIError &&
-                        err.code !== discord_js_1.RESTJSONErrorCodes.UnknownMessage)) {
+                        err.code === discord_js_1.RESTJSONErrorCodes.UnknownMessage)) {
                         console.error(err);
                     }
                 }

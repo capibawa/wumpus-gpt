@@ -31,7 +31,7 @@ export default async function pruneThreads(
         if (
           !(
             err instanceof DiscordAPIError &&
-            err.code !== RESTJSONErrorCodes.UnknownChannel
+            err.code === RESTJSONErrorCodes.UnknownChannel
           )
         ) {
           console.error(err);
@@ -49,7 +49,7 @@ export default async function pruneThreads(
           if (
             !(
               err instanceof DiscordAPIError &&
-              err.code !== RESTJSONErrorCodes.UnknownMessage
+              err.code === RESTJSONErrorCodes.UnknownMessage
             )
           ) {
             console.error(err);
