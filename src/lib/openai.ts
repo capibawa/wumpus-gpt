@@ -28,21 +28,6 @@ export interface CompletionResponse {
 export async function createChatCompletion(
   messages: Array<ChatCompletionRequestMessage>
 ): Promise<CompletionResponse> {
-  // const tokens = messages.reduce((total, message) => {
-  //   return (
-  //     total +
-  //     getTokensFromText(message.role) +
-  //     getTokensFromText(message.content) +
-  //     getTokensFromText(message.name)
-  //   );
-  // }, config.openai.max_tokens);
-
-  // if (tokens > 4096) {
-  //   throw new Error(
-  //     'The request has exceeded the token limit. Try again with a shorter message or start another conversation.'
-  //   );
-  // }
-
   const safeMessages = [];
 
   try {
@@ -79,9 +64,6 @@ export async function createChatCompletion(
       messages: safeMessages,
       model: config.openai.model,
       temperature: Number(config.openai.temperature),
-      top_p: Number(config.openai.top_p),
-      frequency_penalty: Number(config.openai.frequency_penalty),
-      presence_penalty: Number(config.openai.presence_penalty),
       max_tokens: Number(config.openai.max_tokens),
     });
 

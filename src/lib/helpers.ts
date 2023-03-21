@@ -11,7 +11,6 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
-import { isEmpty, isString } from 'lodash';
 import {
   ChatCompletionRequestMessage,
   ChatCompletionRequestMessageRoleEnum,
@@ -19,28 +18,73 @@ import {
 
 import config from '@/config';
 
-const tokenizer = new GPT3Tokenizer({ type: 'gpt3' });
-
-export function generateChatMessages(
-  message: string | Message,
-  behavior?: string
+export function buildContext(
+  messages: Array<ChatCompletionRequestMessage>,
+  userMessage: string,
+  instruction?: string
 ): Array<ChatCompletionRequestMessage> {
-  return [
-    getSystemMessage(behavior),
-    {
-      role: ChatCompletionRequestMessageRoleEnum.User,
-      content: isString(message) ? message : message.content,
-    },
-  ];
+  if (!instruction || instruction === 'Default') {
+    instruction = config.bot.instruction;
+  }
+
+  instruction = instruction.trim();
+
+  if (!instruction.endsWith('.')) {
+    instruction += '.';
+  }
+
+  const systemMessageContext = {
+    role: ChatCompletionRequestMessageRoleEnum.System,
+    content: instruction + ` The current date is ${format(new Date(), 'PPP')}.`,
+  };
+
+  const userMessageContext = {
+    role: ChatCompletionRequestMessageRoleEnum.User,
+    content: userMessage,
+  };
+
+  if (messages.length === 0) {
+    return [systemMessageContext, userMessageContext];
+  }
+
+  let tokenCount = 0;
+
+  const contexts = [];
+  const maxTokens = Number(config.openai.max_tokens) * messages.length;
+  const tokenizer = new GPT3Tokenizer({ type: 'gpt3' });
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    const content = message.content;
+    const encoded = tokenizer.encode(content);
+
+    tokenCount += encoded.text.length;
+
+    if (tokenCount > maxTokens) {
+      contexts.push({
+        role: message.role,
+        content: content.slice(0, tokenCount - maxTokens),
+      });
+
+      break;
+    }
+
+    contexts.push({
+      role: message.role,
+      content,
+    });
+  }
+
+  return [systemMessageContext, ...contexts, userMessageContext];
 }
 
-export function generateAllChatMessages(
-  message: string | Message,
+export function buildThreadContext(
   messages: Collection<string, Message>,
+  userMessage: string,
   botId: string
 ): Array<ChatCompletionRequestMessage> {
-  if (isEmpty(messages)) {
-    return generateChatMessages(message);
+  if (messages.size === 0) {
+    return buildContext([], userMessage);
   }
 
   const initialMessage = messages.last();
@@ -50,7 +94,7 @@ export function generateAllChatMessages(
     initialMessage.embeds.length !== 1 ||
     initialMessage.embeds[0].fields.length !== 2
   ) {
-    return generateChatMessages(message);
+    return buildContext([], userMessage);
   }
 
   const embed = initialMessage.embeds[0];
@@ -62,58 +106,32 @@ export function generateAllChatMessages(
     embed.fields[1].name === 'Behavior' ? embed.fields[1].value : '';
 
   if (!prompt || !behavior) {
-    return generateChatMessages(message);
+    return buildContext([], userMessage);
   }
 
-  return [
-    getSystemMessage(behavior),
+  const context = [
     { role: ChatCompletionRequestMessageRoleEnum.User, content: prompt },
     ...messages
       .filter(
         (message) =>
           message.type === MessageType.Default &&
           message.content &&
-          isEmpty(message.embeds) &&
-          isEmpty(message.mentions.members)
+          message.embeds.length === 0 &&
+          (message.mentions.members?.size ?? 0) === 0
       )
-      .map((message) => toChatMessage(message, botId))
+      .map((message) => {
+        return {
+          role:
+            message.author.id === botId
+              ? ChatCompletionRequestMessageRoleEnum.Assistant
+              : ChatCompletionRequestMessageRoleEnum.User,
+          content: message.content,
+        };
+      })
       .reverse(),
-    isString(message)
-      ? { role: ChatCompletionRequestMessageRoleEnum.User, content: message }
-      : toChatMessage(message, botId),
   ];
-}
 
-export function getSystemMessage(
-  message?: string
-): ChatCompletionRequestMessage {
-  if (!message || message === 'Default') {
-    message = config.bot.instruction;
-  }
-
-  message = message.trim();
-
-  if (!message.endsWith('.')) {
-    message += '.';
-  }
-
-  return {
-    role: ChatCompletionRequestMessageRoleEnum.System,
-    content: message + ` The current date is ${format(new Date(), 'PPP')}.`,
-  };
-}
-
-export function toChatMessage(
-  message: Message,
-  botId: string
-): ChatCompletionRequestMessage {
-  return {
-    role:
-      message.author.id === botId
-        ? ChatCompletionRequestMessageRoleEnum.Assistant
-        : ChatCompletionRequestMessageRoleEnum.User,
-    content: message.content,
-  };
+  return buildContext(context, userMessage);
 }
 
 export function validatePermissions(
@@ -185,13 +203,4 @@ export async function destroyThread(channel: ThreadChannel): Promise<void> {
       console.error(err);
     }
   }
-}
-
-export function getTokensFromText(text?: string): number {
-  // Add 1 to account for the role (user) being 4 characters.
-  return text ? tokenizer.encode(text).bpe.length + 1 : 0;
-}
-
-export function exceedsTokenLimit(text: string): boolean {
-  return getTokensFromText(text) > 4096 - Number(config.openai.max_tokens);
 }

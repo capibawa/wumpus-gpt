@@ -6,24 +6,18 @@ import {
   Client,
   Colors,
   DiscordAPIError,
-  DMChannel,
   Events,
   Interaction,
   Message,
   RESTJSONErrorCodes,
-  TextChannel,
   ThreadChannel,
 } from 'discord.js';
 import { delay } from 'lodash';
 
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import { createErrorEmbed } from '@/lib/embeds';
-import { generateAllChatMessages, generateChatMessages } from '@/lib/helpers';
-import {
-  CompletionResponse,
-  CompletionStatus,
-  createChatCompletion,
-} from '@/lib/openai';
+import { buildThreadContext } from '@/lib/helpers';
+import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(3, 'minute');
@@ -31,27 +25,22 @@ const rateLimiter = new RateLimiter(3, 'minute');
 async function handleRegenerateInteraction(
   interaction: ButtonInteraction,
   client: Client<true>,
-  channel: DMChannel | TextChannel | ThreadChannel,
+  channel: ThreadChannel,
   message: Message
 ) {
-  if (
-    channel.type === ChannelType.PublicThread ||
-    channel.type === ChannelType.PrivateThread
-  ) {
-    const members = await channel.members.fetch();
+  const members = await channel.members.fetch();
 
-    if (!members.has(interaction.user.id)) {
-      await interaction.reply({
-        embeds: [
-          createErrorEmbed(
-            'You must be a member of this thread to regenerate responses.'
-          ),
-        ],
-        ephemeral: true,
-      });
+  if (!members.has(interaction.user.id)) {
+    await interaction.reply({
+      embeds: [
+        createErrorEmbed(
+          'You must be a member of this thread to regenerate responses.'
+        ),
+      ],
+      ephemeral: true,
+    });
 
-      return;
-    }
+    return;
   }
 
   const executed = rateLimiter.attempt(interaction.user.id, async () => {
@@ -77,24 +66,13 @@ async function handleRegenerateInteraction(
         return;
       }
 
-      let completion: CompletionResponse;
-
-      if (
-        channel.type === ChannelType.PublicThread ||
-        channel.type === ChannelType.PrivateThread
-      ) {
-        completion = await createChatCompletion(
-          generateAllChatMessages(
-            previousMessage.content,
-            messages,
-            client.user.id
-          )
-        );
-      } else {
-        completion = await createChatCompletion(
-          generateChatMessages(previousMessage.content)
-        );
-      }
+      const completion = await createChatCompletion(
+        buildThreadContext(
+          messages.filter((message) => message.id !== previousMessage.id),
+          previousMessage.content,
+          client.user.id
+        )
+      );
 
       if (completion.status !== CompletionStatus.Ok) {
         await handleFailedRequest(
@@ -142,9 +120,7 @@ export default new DiscordEvent(
 
     if (
       !channel ||
-      (channel.type !== ChannelType.GuildText &&
-        channel.type !== ChannelType.DM &&
-        channel.type !== ChannelType.PublicThread &&
+      (channel.type !== ChannelType.PublicThread &&
         channel.type !== ChannelType.PrivateThread)
     ) {
       return;
@@ -155,9 +131,7 @@ export default new DiscordEvent(
         await handleRegenerateInteraction(
           interaction,
           interaction.client,
-          channel.partial
-            ? await channel.fetch()
-            : (channel as DMChannel | TextChannel | ThreadChannel),
+          channel,
           interaction.message
         );
         break;

@@ -12,18 +12,15 @@ const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
 const rateLimiter = new rate_limiter_1.default(3, 'minute');
 async function handleRegenerateInteraction(interaction, client, channel, message) {
-    if (channel.type === discord_js_1.ChannelType.PublicThread ||
-        channel.type === discord_js_1.ChannelType.PrivateThread) {
-        const members = await channel.members.fetch();
-        if (!members.has(interaction.user.id)) {
-            await interaction.reply({
-                embeds: [
-                    (0, embeds_1.createErrorEmbed)('You must be a member of this thread to regenerate responses.'),
-                ],
-                ephemeral: true,
-            });
-            return;
-        }
+    const members = await channel.members.fetch();
+    if (!members.has(interaction.user.id)) {
+        await interaction.reply({
+            embeds: [
+                (0, embeds_1.createErrorEmbed)('You must be a member of this thread to regenerate responses.'),
+            ],
+            ephemeral: true,
+        });
+        return;
     }
     const executed = rateLimiter.attempt(interaction.user.id, async () => {
         try {
@@ -38,14 +35,7 @@ async function handleRegenerateInteraction(interaction, client, channel, message
                 await handleFailedRequest(interaction, message, 'Could not find any previous messages.');
                 return;
             }
-            let completion;
-            if (channel.type === discord_js_1.ChannelType.PublicThread ||
-                channel.type === discord_js_1.ChannelType.PrivateThread) {
-                completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(previousMessage.content, messages, client.user.id));
-            }
-            else {
-                completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(previousMessage.content));
-            }
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.buildThreadContext)(messages.filter((message) => message.id !== previousMessage.id), previousMessage.content, client.user.id));
             if (completion.status !== openai_1.CompletionStatus.Ok) {
                 await handleFailedRequest(interaction, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
                 return;
@@ -75,17 +65,13 @@ exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.I
     }
     const channel = interaction.channel;
     if (!channel ||
-        (channel.type !== discord_js_1.ChannelType.GuildText &&
-            channel.type !== discord_js_1.ChannelType.DM &&
-            channel.type !== discord_js_1.ChannelType.PublicThread &&
+        (channel.type !== discord_js_1.ChannelType.PublicThread &&
             channel.type !== discord_js_1.ChannelType.PrivateThread)) {
         return;
     }
     switch (interaction.customId) {
         case 'regenerate':
-            await handleRegenerateInteraction(interaction, interaction.client, channel.partial
-                ? await channel.fetch()
-                : channel, interaction.message);
+            await handleRegenerateInteraction(interaction, interaction.client, channel, interaction.message);
             break;
         default:
             return;

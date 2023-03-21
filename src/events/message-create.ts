@@ -17,9 +17,9 @@ import { delay, isEmpty, truncate } from 'lodash';
 import config from '@/config';
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import {
+  buildContext,
+  buildThreadContext,
   detachComponents,
-  generateAllChatMessages,
-  generateChatMessages,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import Conversation from '@/models/conversation';
@@ -48,7 +48,7 @@ async function handleThreadMessage(
       await channel.sendTyping();
 
       const completion = await createChatCompletion(
-        generateAllChatMessages(message, messages, client.user.id)
+        buildThreadContext(messages, message.content, client.user.id)
       );
 
       if (completion.status !== CompletionStatus.Ok) {
@@ -118,7 +118,7 @@ async function handleDirectMessage(
 
     // TODO: Retain previous messages with constraints (e.g. 10 messages max).
     const completion = await createChatCompletion(
-      generateChatMessages(message)
+      buildContext([], message.content)
     );
 
     if (completion.status !== CompletionStatus.Ok) {

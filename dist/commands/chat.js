@@ -76,7 +76,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                         (0, embeds_1.createThreadEmbed)(interaction.user, input.message, input.behavior),
                     ],
                 });
-                const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.message, input.behavior));
+                const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.buildContext)([], input.message, input.behavior));
                 if (completion.status !== openai_1.CompletionStatus.Ok) {
                     await interaction.editReply({
                         embeds: [

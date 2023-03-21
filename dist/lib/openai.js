@@ -43,9 +43,6 @@ async function createChatCompletion(messages) {
             messages: safeMessages,
             model: config_1.default.openai.model,
             temperature: Number(config_1.default.openai.temperature),
-            top_p: Number(config_1.default.openai.top_p),
-            frequency_penalty: Number(config_1.default.openai.frequency_penalty),
-            presence_penalty: Number(config_1.default.openai.presence_penalty),
             max_tokens: Number(config_1.default.openai.max_tokens),
         });
         const message = completion.data.choices[0].message;

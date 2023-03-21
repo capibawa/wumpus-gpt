@@ -51,7 +51,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
         }
         const executed = rateLimiter.attempt(interaction.user.id, async () => {
             await interaction.deferReply({ ephemeral: input.hidden });
-            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(input.question, input.behavior));
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.buildContext)([], input.question, input.behavior));
             await interaction.editReply(completion.status === openai_1.CompletionStatus.Ok
                 ? { content: completion.message }
                 : { embeds: [(0, embeds_1.createErrorEmbed)(completion.message)] });

@@ -2,7 +2,7 @@ import { DiscordCommand } from 'discord-module-loader';
 import { ApplicationCommandOptionType, Interaction } from 'discord.js';
 
 import { createErrorEmbed } from '@/lib/embeds';
-import { generateChatMessages } from '@/lib/helpers';
+import { buildContext } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
@@ -57,7 +57,7 @@ export default new DiscordCommand({
       await interaction.deferReply({ ephemeral: input.hidden });
 
       const completion = await createChatCompletion(
-        generateChatMessages(input.question, input.behavior)
+        buildContext([], input.question, input.behavior)
       );
 
       await interaction.editReply(

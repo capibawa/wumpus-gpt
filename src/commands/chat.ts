@@ -20,8 +20,8 @@ import {
   createThreadErrorEmbed,
 } from '@/lib/embeds';
 import {
+  buildContext,
   destroyThread,
-  generateChatMessages,
   validatePermissions,
 } from '@/lib/helpers';
 import {
@@ -114,7 +114,7 @@ export default new DiscordCommand({
         });
 
         const completion = await createChatCompletion(
-          generateChatMessages(input.message, input.behavior)
+          buildContext([], input.message, input.behavior)
         );
 
         if (completion.status !== CompletionStatus.Ok) {

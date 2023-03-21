@@ -23,7 +23,7 @@ async function handleThreadMessage(client, channel, message) {
         try {
             const messages = await channel.messages.fetch({ before: message.id });
             await channel.sendTyping();
-            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateAllChatMessages)(message, messages, client.user.id));
+            const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.buildThreadContext)(messages, message.content, client.user.id));
             if (completion.status !== openai_1.CompletionStatus.Ok) {
                 await handleFailedRequest(channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
                 return;
@@ -62,7 +62,7 @@ async function handleDirectMessage(client, channel, message) {
         }
         const messages = await channel.messages.fetch({ before: message.id });
         await channel.sendTyping();
-        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.generateChatMessages)(message));
+        const completion = await (0, openai_1.createChatCompletion)((0, helpers_1.buildContext)([], message.content));
         if (completion.status !== openai_1.CompletionStatus.Ok) {
             await handleFailedRequest(channel, message, completion.message, completion.status === openai_1.CompletionStatus.UnexpectedError);
             return;
