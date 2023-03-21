@@ -53,7 +53,7 @@ function generateAllChatMessages(message, messages, botId) {
 exports.generateAllChatMessages = generateAllChatMessages;
 function getSystemMessage(message) {
     if (!message || message === 'Default') {
-        message = config_1.default.bot.instructions;
+        message = config_1.default.bot.instruction;
     }
     message = message.trim();
     if (!message.endsWith('.')) {

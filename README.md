@@ -13,20 +13,20 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
 > **Warning**
 > This is a work in progress. Feel free to contribute!
 
-- [ ] Closable Threads
+- [ ] Direct Messaging
+- [ ] Mention Replies
 - [x] ~Message Moderation~
-- [x] ~Image Generation~
 - [x] ~Rate Limiting~
 - [x] ~Thread Pruning~
 
 ## Features
 
-- Configurable bot instructions
+- Configurable bot instruction/behaviour
 - Remembers previous messages in threads
-- Ability to regenerate responses
+- Ability to regenerate responses (only in threads)
 - Image generation using DALL·E via `/image`
 - Rate limiting per user to prevent abuse
-- Automatic thread pruning
+- Automatic thread pruning (enabled by default)
 
 ## Get Started
 
@@ -39,6 +39,7 @@ You can invite the bot to your server by clicking [here](https://discord.com/api
    - Enable "Server Members Intent" and "Message Content Intent" under "Privileged Gateway Intents"
 1. Go to the OAuth2 tab, copy your "Client ID", and fill in `DISCORD_CLIENT_ID`
 1. Go to https://beta.openai.com/account/api-keys, create an API key, and fill in `OPENAI_API_KEY`
+1. Feel free to set `OPENAI_MODEL` if you have access to `gpt-4`, otherwise `gpt-3.5-turbo` is the default
 1. Install dependencies and run the bot
 
    ```

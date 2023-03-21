@@ -88,7 +88,7 @@ export function getSystemMessage(
   message?: string
 ): ChatCompletionRequestMessage {
   if (!message || message === 'Default') {
-    message = config.bot.instructions;
+    message = config.bot.instruction;
   }
 
   message = message.trim();
