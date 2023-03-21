@@ -1,5 +1,7 @@
 # WumpusGPT
 
+[![Discord](https://img.shields.io/discord/1082128544664141914)](https://discord.gg/EW46fR3MPE)
+
 WumpusGPT is a Discord chatbot written in TypeScript and powered by OpenAI's `gpt-4` and `gpt-3.5-turbo` language models.
 
 Although WumpusGPT is not quite the same as ChatGPT, they both utilize the same language model so you will yield very similar results.
