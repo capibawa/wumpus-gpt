@@ -27,4 +27,10 @@ const config = {
         max_tokens: process.env.OPENAI_MAX_TOKENS || 512,
     },
 };
+if (!config.database.url ||
+    !config.discord.client_id ||
+    !config.discord.token ||
+    !config.openai.api_key) {
+    throw new Error('Missing environment variables. Make sure the following are set: DATABASE_URL, DISCORD_CLIENT_ID, DISCORD_TOKEN, OPENAI_API_KEY.');
+}
 exports.default = config;

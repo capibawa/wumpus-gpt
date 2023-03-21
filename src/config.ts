@@ -28,4 +28,15 @@ const config = {
   },
 };
 
+if (
+  !config.database.url ||
+  !config.discord.client_id ||
+  !config.discord.token ||
+  !config.openai.api_key
+) {
+  throw new Error(
+    'Missing environment variables. Make sure the following are set: DATABASE_URL, DISCORD_CLIENT_ID, DISCORD_TOKEN, OPENAI_API_KEY.'
+  );
+}
+
 export default config;
