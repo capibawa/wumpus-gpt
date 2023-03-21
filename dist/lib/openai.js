@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createTitleFromMessages = exports.createImage = exports.createChatCompletion = exports.CompletionStatus = void 0;
+exports.generateTitle = exports.createImage = exports.createChatCompletion = exports.CompletionStatus = void 0;
 const tslib_1 = require("tslib");
 const axios_1 = tslib_1.__importDefault(require("axios"));
 const lodash_1 = require("lodash");
@@ -17,8 +17,8 @@ var CompletionStatus;
     CompletionStatus[CompletionStatus["UnexpectedError"] = 4] = "UnexpectedError";
 })(CompletionStatus = exports.CompletionStatus || (exports.CompletionStatus = {}));
 async function createChatCompletion(messages) {
-    const safeMessages = [];
     try {
+        const safeMessages = [];
         const moderation = await openai.createModeration({
             input: messages
                 .filter((message) => message.role === 'user')
@@ -138,25 +138,30 @@ async function createImage(prompt) {
     };
 }
 exports.createImage = createImage;
-async function createTitleFromMessages(userMessage, assistantMessage) {
+async function generateTitle(userMessage, botMessage) {
     const messages = [
+        {
+            role: openai_1.ChatCompletionRequestMessageRoleEnum.System,
+            content: 'You are a helpful assistant.',
+        },
         {
             role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
             content: userMessage,
         },
         {
             role: openai_1.ChatCompletionRequestMessageRoleEnum.Assistant,
-            content: assistantMessage,
+            content: botMessage,
         },
         {
             role: openai_1.ChatCompletionRequestMessageRoleEnum.User,
-            content: 'Describe the nature of our previous messages in less than 6 words.',
+            content: 'Create a title for our conversation in 6 words or less.',
         },
     ];
     try {
         const completion = await openai.createChatCompletion({
             messages,
             model: config_1.default.openai.model,
+            temperature: 0.5,
         });
         const message = completion.data.choices[0].message;
         if (message) {
@@ -173,7 +178,7 @@ async function createTitleFromMessages(userMessage, assistantMessage) {
     catch (err) { }
     return '';
 }
-exports.createTitleFromMessages = createTitleFromMessages;
+exports.generateTitle = generateTitle;
 function logError(err) {
     if (axios_1.default.isAxiosError(err)) {
         if (err.response) {

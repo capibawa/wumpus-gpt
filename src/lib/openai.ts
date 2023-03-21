@@ -28,9 +28,9 @@ export interface CompletionResponse {
 export async function createChatCompletion(
   messages: Array<ChatCompletionRequestMessage>
 ): Promise<CompletionResponse> {
-  const safeMessages = [];
-
   try {
+    const safeMessages = [];
+
     const moderation = await openai.createModeration({
       input: messages
         .filter((message) => message.role === 'user')
@@ -170,23 +170,26 @@ export async function createImage(prompt: string): Promise<CompletionResponse> {
   };
 }
 
-export async function createTitleFromMessages(
+export async function generateTitle(
   userMessage: string,
-  assistantMessage: string
+  botMessage: string
 ): Promise<string> {
   const messages = [
+    {
+      role: ChatCompletionRequestMessageRoleEnum.System,
+      content: 'You are a helpful assistant.',
+    },
     {
       role: ChatCompletionRequestMessageRoleEnum.User,
       content: userMessage,
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.Assistant,
-      content: assistantMessage,
+      content: botMessage,
     },
     {
       role: ChatCompletionRequestMessageRoleEnum.User,
-      content:
-        'Describe the nature of our previous messages in less than 6 words.',
+      content: 'Create a title for our conversation in 6 words or less.',
     },
   ];
 
@@ -194,6 +197,7 @@ export async function createTitleFromMessages(
     const completion = await openai.createChatCompletion({
       messages,
       model: config.openai.model,
+      temperature: 0.5,
     });
 
     const message = completion.data.choices[0].message;

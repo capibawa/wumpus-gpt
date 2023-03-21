@@ -128,7 +128,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     await (0, helpers_1.destroyThread)(thread);
                     throw err;
                 }
-                const title = await (0, openai_1.createTitleFromMessages)(input.message, completion.message);
+                const title = await (0, openai_1.generateTitle)(input.message, completion.message);
                 if (title) {
                     await thread.edit({ name: `💬 ${title}` });
                 }

@@ -27,7 +27,7 @@ import {
 import {
   CompletionStatus,
   createChatCompletion,
-  createTitleFromMessages,
+  generateTitle,
 } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 import Conversation from '@/models/conversation';
@@ -188,10 +188,7 @@ export default new DiscordCommand({
           throw err;
         }
 
-        const title = await createTitleFromMessages(
-          input.message,
-          completion.message
-        );
+        const title = await generateTitle(input.message, completion.message);
 
         if (title) {
           await thread.edit({ name: `💬 ${title}` });
