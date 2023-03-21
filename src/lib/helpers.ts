@@ -93,7 +93,7 @@ export function getSystemMessage(
 
   message = message.trim();
 
-  if (message && message.slice(-1) !== '.') {
+  if (!message.endsWith('.')) {
     message += '.';
   }
 

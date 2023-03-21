@@ -1,24 +1,18 @@
-import fs from 'fs';
 import path from 'path';
+import glob from 'tiny-glob';
 
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs
-  .readdirSync(commandsPath)
-  .filter((file) => file.endsWith('.ts'));
+glob(`${path.join(__dirname, 'commands')}/**/*.ts`)
+  .then(async (files) => {
+    await Promise.all(files.map((path) => import(path)));
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-
-  require(filePath);
-}
-
-const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs
-  .readdirSync(eventsPath)
-  .filter((file) => file.endsWith('.ts'));
-
-for (const file of eventFiles) {
-  const filePath = path.join(eventsPath, file);
-
-  require(filePath);
-}
+glob(`${path.join(__dirname, 'events')}/**/*.ts`)
+  .then(async (files) => {
+    await Promise.all(files.map((path) => import(path)));
+  })
+  .catch((err) => {
+    console.error(err);
+  });

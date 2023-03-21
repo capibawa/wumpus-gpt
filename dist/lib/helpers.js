@@ -56,7 +56,7 @@ function getSystemMessage(message) {
         message = config_1.default.bot.instructions;
     }
     message = message.trim();
-    if (message && message.slice(-1) !== '.') {
+    if (!message.endsWith('.')) {
         message += '.';
     }
     return {

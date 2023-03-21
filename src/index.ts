@@ -12,8 +12,8 @@ const isDev = process.argv[0].includes('ts-node');
 const modulesDir = isDev ? '../.ts-node' : '../dist';
 
 if (isDev) {
-  // Force modules to be emitted during development, as the
-  // current module loader does not detect TypeScript files.
+  // Force modules to be emitted during development, as the current
+  // module loader does not detect TypeScript files.
   require('@/load-modules');
 }
 
