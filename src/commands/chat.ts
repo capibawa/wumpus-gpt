@@ -22,6 +22,7 @@ import {
 import {
   buildContext,
   destroyThread,
+  getThreadPrefix,
   validatePermissions,
 } from '@/lib/helpers';
 import {
@@ -133,7 +134,7 @@ export default new DiscordCommand({
         }
 
         const thread = await channel.threads.create({
-          name: truncate(`💬 ${input.message}`, { length: 100 }),
+          name: truncate(getThreadPrefix() + input.message, { length: 100 }),
           autoArchiveDuration: ThreadAutoArchiveDuration.OneHour,
           reason: config.bot.name,
           rateLimitPerUser: 3,
@@ -191,7 +192,7 @@ export default new DiscordCommand({
         const title = await generateTitle(input.message, completion.message);
 
         if (title) {
-          await thread.edit({ name: `💬 ${title}` });
+          await thread.edit({ name: getThreadPrefix() + title });
         }
       } catch (err) {
         let error = undefined;

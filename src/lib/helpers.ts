@@ -204,3 +204,7 @@ export async function destroyThread(channel: ThreadChannel): Promise<void> {
     }
   }
 }
+
+export function getThreadPrefix(): string {
+  return config.bot.thread_prefix ? config.bot.thread_prefix + ' ' : '';
+}

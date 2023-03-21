@@ -10,10 +10,13 @@ const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
 async function handleThreadMessage(client, channel, message) {
-    if (channel.ownerId !== client.user.id) {
+    if (channel.ownerId !== client.user.id ||
+        channel.archived ||
+        channel.locked) {
         return;
     }
-    if (channel.archived || channel.locked || !channel.name.startsWith('💬')) {
+    const prefix = (0, helpers_1.getThreadPrefix)();
+    if (prefix && !channel.name.startsWith(prefix)) {
         return;
     }
     (0, lodash_1.delay)(async () => {

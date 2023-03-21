@@ -86,7 +86,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                     return;
                 }
                 const thread = await channel.threads.create({
-                    name: (0, lodash_1.truncate)(`💬 ${input.message}`, { length: 100 }),
+                    name: (0, lodash_1.truncate)((0, helpers_1.getThreadPrefix)() + input.message, { length: 100 }),
                     autoArchiveDuration: discord_js_1.ThreadAutoArchiveDuration.OneHour,
                     reason: config_1.default.bot.name,
                     rateLimitPerUser: 3,
@@ -130,7 +130,7 @@ exports.default = new discord_module_loader_1.DiscordCommand({
                 }
                 const title = await (0, openai_1.generateTitle)(input.message, completion.message);
                 if (title) {
-                    await thread.edit({ name: `💬 ${title}` });
+                    await thread.edit({ name: (0, helpers_1.getThreadPrefix)() + title });
                 }
             }
             catch (err) {

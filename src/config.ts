@@ -8,6 +8,7 @@ const config = {
     instruction:
       process.env.BOT_INSTRUCTION || 'You are WumpusGPT, a helpful assistant.',
     invite_url: `https://discord.com/api/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&permissions=397284550656&scope=bot`,
+    thread_prefix: process.env.BOT_THREAD_PREFIX || '💬',
     prune_interval: process.env.BOT_PRUNE_INTERVAL || 0,
   },
   database: {

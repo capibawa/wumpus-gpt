@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.destroyThread = exports.detachComponents = exports.validatePermissions = exports.buildThreadContext = exports.buildContext = void 0;
+exports.getThreadPrefix = exports.destroyThread = exports.detachComponents = exports.validatePermissions = exports.buildThreadContext = exports.buildContext = void 0;
 const tslib_1 = require("tslib");
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const discord_js_1 = require("discord.js");
@@ -143,3 +143,7 @@ async function destroyThread(channel) {
     }
 }
 exports.destroyThread = destroyThread;
+function getThreadPrefix() {
+    return config_1.default.bot.thread_prefix ? config_1.default.bot.thread_prefix + ' ' : '';
+}
+exports.getThreadPrefix = getThreadPrefix;

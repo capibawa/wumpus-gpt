@@ -20,6 +20,7 @@ import {
   buildContext,
   buildThreadContext,
   detachComponents,
+  getThreadPrefix,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import Conversation from '@/models/conversation';
@@ -29,11 +30,17 @@ async function handleThreadMessage(
   channel: ThreadChannel,
   message: Message
 ) {
-  if (channel.ownerId !== client.user.id) {
+  if (
+    channel.ownerId !== client.user.id ||
+    channel.archived ||
+    channel.locked
+  ) {
     return;
   }
 
-  if (channel.archived || channel.locked || !channel.name.startsWith('💬')) {
+  const prefix = getThreadPrefix();
+
+  if (prefix && !channel.name.startsWith(prefix)) {
     return;
   }
 
