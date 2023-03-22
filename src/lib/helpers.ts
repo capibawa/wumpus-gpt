@@ -131,7 +131,7 @@ export function buildThreadContext(
       .reverse(),
   ];
 
-  return buildContext(context, userMessage);
+  return buildContext(context, userMessage, behavior);
 }
 
 export function validatePermissions(

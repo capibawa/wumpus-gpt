@@ -83,7 +83,7 @@ function buildThreadContext(messages, userMessage, botId) {
         })
             .reverse(),
     ];
-    return buildContext(context, userMessage);
+    return buildContext(context, userMessage, behavior);
 }
 exports.buildThreadContext = buildThreadContext;
 function validatePermissions(permissions, bits) {
