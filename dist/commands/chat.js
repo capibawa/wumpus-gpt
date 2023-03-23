@@ -136,14 +136,11 @@ exports.default = new discord_module_loader_1.Command({
                 else {
                     console.error(err);
                 }
-                if (!(err instanceof discord_js_1.DiscordAPIError &&
-                    err.code === discord_js_1.RESTJSONErrorCodes.UnknownMessage)) {
-                    await interaction.editReply({
-                        embeds: [
-                            (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, error),
-                        ],
-                    });
-                }
+                await interaction.editReply({
+                    embeds: [
+                        (0, embeds_1.createThreadErrorEmbed)(interaction.user, input.message, input.behavior, error),
+                    ],
+                });
             }
         });
         if (!executed) {

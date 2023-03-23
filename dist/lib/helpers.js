@@ -86,30 +86,27 @@ function buildThreadContext(messages, userMessage, botId) {
     return buildContext(context, userMessage, behavior);
 }
 exports.buildThreadContext = buildThreadContext;
-function validatePermissions(permissions, bits) {
-    const requiredPermissions = new discord_js_1.PermissionsBitField([
-        bits,
-        discord_js_1.PermissionsBitField.Flags.UseApplicationCommands,
-    ]);
+function validatePermissions(permissions, requiredPermissions) {
+    const required = new discord_js_1.PermissionsBitField(requiredPermissions);
     if (!permissions) {
         return {
             fails: true,
             message: 'Unable to fetch permissions.',
-            permissions: requiredPermissions.toArray(),
+            permissions: required.toArray(),
         };
     }
-    const missingPermissions = permissions.missing(requiredPermissions.valueOf());
+    const missingPermissions = permissions.missing(requiredPermissions);
     if (missingPermissions.length > 0) {
         return {
             fails: true,
             message: `Missing permissions: ${missingPermissions.join(', ')}`,
-            permissions: requiredPermissions.toArray(),
+            permissions: required.toArray(),
         };
     }
     return {
         fails: false,
         message: '',
-        permissions: requiredPermissions.toArray(),
+        permissions: required.toArray(),
     };
 }
 exports.validatePermissions = validatePermissions;
@@ -127,19 +124,10 @@ async function detachComponents(messages, botId) {
 }
 exports.detachComponents = detachComponents;
 async function destroyThread(channel) {
-    try {
-        await channel.delete();
-        const starterMessage = await channel.fetchStarterMessage();
-        if (starterMessage) {
-            await starterMessage.delete();
-        }
-    }
-    catch (err) {
-        if (err instanceof discord_js_1.DiscordAPIError &&
-            err.code !== discord_js_1.RESTJSONErrorCodes.UnknownChannel &&
-            err.code !== discord_js_1.RESTJSONErrorCodes.UnknownMessage) {
-            console.error(err);
-        }
+    const starterMessage = await channel.fetchStarterMessage();
+    await channel.delete();
+    if (starterMessage) {
+        await starterMessage.delete();
     }
 }
 exports.destroyThread = destroyThread;

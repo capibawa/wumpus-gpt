@@ -15,27 +15,9 @@ async function pruneThreads(client) {
             },
         });
         for (const conversation of conversations) {
-            let channel = null;
-            try {
-                channel = await client.channels.fetch(conversation.channelId);
-            }
-            catch (err) {
-                if (!(err instanceof discord_js_1.DiscordAPIError &&
-                    err.code === discord_js_1.RESTJSONErrorCodes.UnknownChannel)) {
-                    console.error(err);
-                }
-            }
+            const channel = await client.channels.fetch(conversation.channelId);
             if (channel && channel.isThread()) {
-                let message = null;
-                try {
-                    message = await channel.parent?.messages.fetch(conversation.messageId);
-                }
-                catch (err) {
-                    if (!(err instanceof discord_js_1.DiscordAPIError &&
-                        err.code === discord_js_1.RESTJSONErrorCodes.UnknownMessage)) {
-                        console.error(err);
-                    }
-                }
+                const message = await channel.parent?.messages.fetch(conversation.messageId);
                 if (message && message.embeds.length > 0) {
                     const embed = message.embeds[0];
                     await message.edit({

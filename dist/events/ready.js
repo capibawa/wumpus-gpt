@@ -13,11 +13,23 @@ exports.default = new discord_module_loader_1.Event({
         if (!client.user) {
             return;
         }
-        console.log(`\nLogged in as ${client.user.tag}!`);
-        console.log(`You can invite this bot with the following URL: ${config_1.default.bot.invite_url}\n`);
+        process.on('uncaughtException', (err) => {
+            console.error(err);
+            if (!(err instanceof discord_js_1.DiscordAPIError)) {
+                process.exit(1);
+            }
+        });
+        process.on('unhandledRejection', (err) => {
+            console.error(err);
+            if (!(err instanceof discord_js_1.DiscordAPIError)) {
+                process.exit(1);
+            }
+        });
         const job = (0, croner_1.default)('* * * * *', async () => {
             await (0, prune_threads_1.default)(client);
         });
+        console.log(`\nLogged in as ${client.user.tag}!`);
+        console.log(`You can invite this bot with the following URL: ${config_1.default.bot.invite_url}\n`);
         await job.trigger();
     },
 });
