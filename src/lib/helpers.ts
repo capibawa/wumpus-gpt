@@ -2,12 +2,10 @@ import format from 'date-fns/format';
 import {
   BitFieldResolvable,
   Collection,
-  DiscordAPIError,
   Message,
   MessageType,
   PermissionsBitField,
   PermissionsString,
-  RESTJSONErrorCodes,
   ThreadChannel,
 } from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -186,22 +184,12 @@ export async function detachComponents(
 }
 
 export async function destroyThread(channel: ThreadChannel): Promise<void> {
-  try {
-    await channel.delete();
+  const starterMessage = await channel.fetchStarterMessage();
 
-    const starterMessage = await channel.fetchStarterMessage();
+  await channel.delete();
 
-    if (starterMessage) {
-      await starterMessage.delete();
-    }
-  } catch (err) {
-    if (
-      err instanceof DiscordAPIError &&
-      err.code !== RESTJSONErrorCodes.UnknownChannel &&
-      err.code !== RESTJSONErrorCodes.UnknownMessage
-    ) {
-      console.error(err);
-    }
+  if (starterMessage) {
+    await starterMessage.delete();
   }
 }
 

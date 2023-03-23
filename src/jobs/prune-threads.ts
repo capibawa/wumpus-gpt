@@ -1,10 +1,4 @@
-import {
-  Client,
-  Colors,
-  DiscordAPIError,
-  EmbedBuilder,
-  RESTJSONErrorCodes,
-} from 'discord.js';
+import { Client, Colors, EmbedBuilder } from 'discord.js';
 import { Op } from 'sequelize';
 
 import { destroyThread } from '@/lib/helpers';
@@ -23,38 +17,12 @@ export default async function pruneThreads(
     });
 
     for (const conversation of conversations) {
-      let channel = null;
-
-      try {
-        channel = await client.channels.fetch(conversation.channelId);
-      } catch (err) {
-        if (
-          !(
-            err instanceof DiscordAPIError &&
-            err.code === RESTJSONErrorCodes.UnknownChannel
-          )
-        ) {
-          console.error(err);
-        }
-      }
+      const channel = await client.channels.fetch(conversation.channelId);
 
       if (channel && channel.isThread()) {
-        let message = null;
-
-        try {
-          message = await channel.parent?.messages.fetch(
-            conversation.messageId
-          );
-        } catch (err) {
-          if (
-            !(
-              err instanceof DiscordAPIError &&
-              err.code === RESTJSONErrorCodes.UnknownMessage
-            )
-          ) {
-            console.error(err);
-          }
-        }
+        const message = await channel.parent?.messages.fetch(
+          conversation.messageId
+        );
 
         if (message && message.embeds.length > 0) {
           const embed = message.embeds[0];

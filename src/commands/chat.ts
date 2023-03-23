@@ -203,25 +203,16 @@ export default new Command({
           console.error(err);
         }
 
-        if (
-          // It's possible for the interaction message to be deleted
-          // while a completion is being generated.
-          !(
-            err instanceof DiscordAPIError &&
-            err.code === RESTJSONErrorCodes.UnknownMessage
-          )
-        ) {
-          await interaction.editReply({
-            embeds: [
-              createThreadErrorEmbed(
-                interaction.user,
-                input.message,
-                input.behavior,
-                error
-              ),
-            ],
-          });
-        }
+        await interaction.editReply({
+          embeds: [
+            createThreadErrorEmbed(
+              interaction.user,
+              input.message,
+              input.behavior,
+              error
+            ),
+          ],
+        });
       }
     });
 
