@@ -1,4 +1,4 @@
-import { DiscordEvent } from 'discord-module-loader';
+import { Event } from '@biscxit/discord-module-loader';
 import {
   ChannelType,
   Client,
@@ -152,9 +152,9 @@ async function handleDirectMessage(
   }, 2000);
 }
 
-export default new DiscordEvent(
-  Events.MessageCreate,
-  async (message: Message) => {
+export default new Event({
+  name: Events.MessageCreate,
+  execute: async (message: Message) => {
     const client = message.client;
 
     if (
@@ -184,8 +184,8 @@ export default new DiscordEvent(
       default:
         return;
     }
-  }
-);
+  },
+});
 
 function isLastMessageStale(
   message: Message,

@@ -1,25 +1,30 @@
-import { DiscordCommand } from 'discord-module-loader';
-import { Colors, EmbedBuilder, Interaction } from 'discord.js';
+import { Command } from '@biscxit/discord-module-loader';
+import {
+  ChatInputCommandInteraction,
+  Colors,
+  EmbedBuilder,
+  SlashCommandBuilder,
+} from 'discord.js';
 
-export default new DiscordCommand({
-  command: {
-    name: 'ping',
-    description: 'Replies with Pong!',
-  },
-  execute: async (interaction: Interaction) => {
-    if (!interaction.isChatInputCommand()) {
-      return;
-    }
+export default new Command({
+  data: new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Replies with Pong!'),
+  execute: async (interaction: ChatInputCommandInteraction) => {
+    const embed = new EmbedBuilder()
+      .setColor(Colors.Green)
+      .setTitle('Pong!')
+      .setDescription('Measuring ping...');
 
-    const ping = Math.abs(Date.now() - interaction.createdTimestamp);
+    const message = await interaction.reply({
+      embeds: [embed],
+      fetchReply: true,
+    });
 
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(Colors.Green)
-          .setTitle('Pong!')
-          .setDescription(`Took ${ping} ms`),
-      ],
+    const ping = message.createdTimestamp - interaction.createdTimestamp;
+
+    await interaction.editReply({
+      embeds: [embed.setDescription(`Took ${ping} ms.`)],
     });
   },
 });

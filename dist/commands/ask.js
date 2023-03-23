@@ -1,42 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const discord_module_loader_1 = require("discord-module-loader");
+const discord_module_loader_1 = require("@biscxit/discord-module-loader");
 const discord_js_1 = require("discord.js");
 const embeds_1 = require("../lib/embeds");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
 const rateLimiter = new rate_limiter_1.default(3, 'minute');
-exports.default = new discord_module_loader_1.DiscordCommand({
-    command: {
-        name: 'ask',
-        description: 'Ask anything!',
-        options: [
-            {
-                type: discord_js_1.ApplicationCommandOptionType.String,
-                name: 'question',
-                description: 'The question to ask the bot.',
-                required: true,
-                maxLength: 1024,
-            },
-            {
-                type: discord_js_1.ApplicationCommandOptionType.String,
-                name: 'behavior',
-                description: 'Specify how the bot should behave.',
-                maxLength: 1024,
-            },
-            {
-                type: discord_js_1.ApplicationCommandOptionType.Boolean,
-                name: 'hidden',
-                description: 'Whether or not the response should be shown.',
-            },
-        ],
-    },
+exports.default = new discord_module_loader_1.Command({
+    data: new discord_js_1.SlashCommandBuilder()
+        .setName('ask')
+        .setDescription('Ask anything!')
+        .addStringOption((option) => option
+        .setName('question')
+        .setDescription('The question to ask the bot.')
+        .setRequired(true)
+        .setMaxLength(1024))
+        .addStringOption((option) => option
+        .setName('behavior')
+        .setDescription('Specify how the bot should behave.')
+        .setMaxLength(1024))
+        .addBooleanOption((option) => option
+        .setName('hidden')
+        .setDescription('Whether or not the response should be shown.')),
     execute: async (interaction) => {
-        if (!interaction.isChatInputCommand()) {
-            return;
-        }
         const input = {
             question: interaction.options.getString('question') ?? '',
             behavior: interaction.options.getString('behavior') ?? '',

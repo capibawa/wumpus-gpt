@@ -151,12 +151,12 @@ export function validatePermissions(
     };
   }
 
-  const missingPermissions = permissions.missing(requiredPermissions);
+  const missingPermissions = permissions.missing(requiredPermissions.valueOf());
 
   if (missingPermissions.length > 0) {
     return {
       fails: true,
-      message: `Missing permissions: ${missingPermissions.join(', ')}.`,
+      message: `Missing permissions: ${missingPermissions.join(', ')}`,
       permissions: requiredPermissions.toArray(),
     };
   }

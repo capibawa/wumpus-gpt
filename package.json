@@ -1,26 +1,24 @@
 {
   "name": "wumpus-gpt",
   "version": "0.0.1",
-  "license": "MIT",
   "author": {
     "name": "biscxit",
     "url": "https://github.com/biscxit"
   },
+  "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts,json --exec npm run dev:serve",
-    "dev:serve": "rimraf .ts-node && ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
     "build": "rimraf dist && tsc && tsc-alias",
     "start": "node dist/index.js",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
     "prepare": "husky install"
   },
   "dependencies": {
+    "@biscxit/discord-module-loader": "^1.0.0",
     "croner": "^6.0.2",
     "date-fns": "^2.29.3",
-    "discord-module-loader": "^1.4.0",
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
     "gpt3-tokenizer": "^1.1.5",
@@ -28,8 +26,7 @@
     "lodash": "^4.17.21",
     "mysql2": "^3.2.0",
     "openai": "^3.2.1",
-    "sequelize": "^6.29.3",
-    "tiny-glob": "^0.2.9"
+    "sequelize": "^6.29.3"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.191",

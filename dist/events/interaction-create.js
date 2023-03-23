@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
+const discord_module_loader_1 = require("@biscxit/discord-module-loader");
 const builders_1 = require("@discordjs/builders");
-const discord_module_loader_1 = require("discord-module-loader");
 const discord_js_1 = require("discord.js");
 const lodash_1 = require("lodash");
 const buttons_1 = require("../lib/buttons");
@@ -59,23 +59,26 @@ async function handleRegenerateInteraction(interaction, client, channel, message
         });
     }
 }
-exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.InteractionCreate, async (interaction) => {
-    if (!interaction.isButton()) {
-        return;
-    }
-    const channel = interaction.channel;
-    if (!channel ||
-        (channel.type !== discord_js_1.ChannelType.PublicThread &&
-            channel.type !== discord_js_1.ChannelType.PrivateThread)) {
-        return;
-    }
-    switch (interaction.customId) {
-        case 'regenerate':
-            await handleRegenerateInteraction(interaction, interaction.client, channel, interaction.message);
-            break;
-        default:
+exports.default = new discord_module_loader_1.Event({
+    name: discord_js_1.Events.InteractionCreate,
+    execute: async (interaction) => {
+        if (!interaction.isButton()) {
             return;
-    }
+        }
+        const channel = interaction.channel;
+        if (!channel ||
+            (channel.type !== discord_js_1.ChannelType.PublicThread &&
+                channel.type !== discord_js_1.ChannelType.PrivateThread)) {
+            return;
+        }
+        switch (interaction.customId) {
+            case 'regenerate':
+                await handleRegenerateInteraction(interaction, interaction.client, channel, interaction.message);
+                break;
+            default:
+                return;
+        }
+    },
 });
 async function handleFailedRequest(interaction, message, error, queueDeletion = false) {
     const embed = await message.reply({

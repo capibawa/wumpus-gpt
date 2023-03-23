@@ -1,5 +1,5 @@
+import { Event } from '@biscxit/discord-module-loader';
 import { EmbedBuilder } from '@discordjs/builders';
-import { DiscordEvent } from 'discord-module-loader';
 import {
   ButtonInteraction,
   ChannelType,
@@ -109,9 +109,9 @@ async function handleRegenerateInteraction(
   }
 }
 
-export default new DiscordEvent(
-  Events.InteractionCreate,
-  async (interaction: Interaction) => {
+export default new Event({
+  name: Events.InteractionCreate,
+  execute: async (interaction: Interaction) => {
     if (!interaction.isButton()) {
       return;
     }
@@ -138,8 +138,8 @@ export default new DiscordEvent(
       default:
         return;
     }
-  }
-);
+  },
+});
 
 async function handleFailedRequest(
   interaction: ButtonInteraction,

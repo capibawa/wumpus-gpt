@@ -1,14 +1,12 @@
 {
   "ts-node": {
-    "require": ["tsconfig-paths/register"],
-    "compilerHost": true,
-    "emit": true
+    "require": ["tsconfig-paths/register"]
   },
   "compilerOptions": {
-    "target": "es2021",
-    "lib": ["es2021"],
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "target": "es2022",
+    "lib": ["es2022"],
+    "rootDir": "src",
+    "outDir": "dist",
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -26,5 +24,5 @@
     }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".ts-node", "src/load-modules.ts"]
+  "exclude": ["node_modules", "dist"]
 }

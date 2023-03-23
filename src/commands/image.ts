@@ -1,8 +1,8 @@
-import { DiscordCommand } from 'discord-module-loader';
+import { Command } from '@biscxit/discord-module-loader';
 import {
-  ApplicationCommandOptionType,
-  Interaction,
+  ChatInputCommandInteraction,
   InteractionEditReplyOptions,
+  SlashCommandBuilder,
 } from 'discord.js';
 
 import { createErrorEmbed } from '@/lib/embeds';
@@ -11,30 +11,23 @@ import RateLimiter from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(1, 'minute');
 
-export default new DiscordCommand({
-  command: {
-    name: 'image',
-    description: 'Create an image given a prompt!',
-    options: [
-      {
-        type: ApplicationCommandOptionType.String,
-        name: 'prompt',
-        description: 'A text description of the desired image.',
-        required: true,
-        maxLength: 1000,
-      },
-      {
-        type: ApplicationCommandOptionType.Boolean,
-        name: 'hidden',
-        description: 'Whether or not the response should be shown.',
-      },
-    ],
-  },
-  execute: async (interaction: Interaction) => {
-    if (!interaction.isChatInputCommand()) {
-      return;
-    }
-
+export default new Command({
+  data: new SlashCommandBuilder()
+    .setName('image')
+    .setDescription('Create an image given a prompt!')
+    .addStringOption((option) =>
+      option
+        .setName('prompt')
+        .setDescription('A text description of the desired image.')
+        .setRequired(true)
+        .setMaxLength(1000)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName('hidden')
+        .setDescription('Whether or not the response should be shown.')
+    ),
+  execute: async (interaction: ChatInputCommandInteraction) => {
     const input = {
       prompt: interaction.options.getString('prompt') ?? '',
       hidden: interaction.options.getBoolean('hidden') ?? false,

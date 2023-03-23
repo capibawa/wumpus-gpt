@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const discord_module_loader_1 = require("discord-module-loader");
+const discord_module_loader_1 = require("@biscxit/discord-module-loader");
 const discord_js_1 = require("discord.js");
 const lodash_1 = require("lodash");
 const config_1 = tslib_1.__importDefault(require("../config"));
@@ -12,30 +12,20 @@ const openai_1 = require("../lib/openai");
 const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
 const conversation_1 = tslib_1.__importDefault(require("../models/conversation"));
 const rateLimiter = new rate_limiter_1.default(5, 900000);
-exports.default = new discord_module_loader_1.DiscordCommand({
-    command: {
-        name: 'chat',
-        description: 'Start a conversation!',
-        options: [
-            {
-                type: discord_js_1.ApplicationCommandOptionType.String,
-                name: 'message',
-                description: 'The message to start the conversation with.',
-                required: true,
-                maxLength: 1024,
-            },
-            {
-                type: discord_js_1.ApplicationCommandOptionType.String,
-                name: 'behavior',
-                description: 'Specify how the bot should behave.',
-                maxLength: 1024,
-            },
-        ],
-    },
+exports.default = new discord_module_loader_1.Command({
+    data: new discord_js_1.SlashCommandBuilder()
+        .setName('chat')
+        .setDescription('Start a conversation!')
+        .addStringOption((option) => option
+        .setName('message')
+        .setDescription('The message to start the conversation with.')
+        .setRequired(true)
+        .setMaxLength(1024))
+        .addStringOption((option) => option
+        .setName('behavior')
+        .setDescription('Specify how the bot should behave.')
+        .setMaxLength(1024)),
     execute: async (interaction) => {
-        if (!interaction.isChatInputCommand()) {
-            return;
-        }
         const validator = (0, helpers_1.validatePermissions)(interaction.guild?.members.me?.permissions, [
             discord_js_1.PermissionsBitField.Flags.SendMessages,
             discord_js_1.PermissionsBitField.Flags.SendMessagesInThreads,

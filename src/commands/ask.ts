@@ -1,5 +1,5 @@
-import { DiscordCommand } from 'discord-module-loader';
-import { ApplicationCommandOptionType, Interaction } from 'discord.js';
+import { Command } from '@biscxit/discord-module-loader';
+import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 
 import { createErrorEmbed } from '@/lib/embeds';
 import { buildContext } from '@/lib/helpers';
@@ -8,36 +8,29 @@ import RateLimiter from '@/lib/rate-limiter';
 
 const rateLimiter = new RateLimiter(3, 'minute');
 
-export default new DiscordCommand({
-  command: {
-    name: 'ask',
-    description: 'Ask anything!',
-    options: [
-      {
-        type: ApplicationCommandOptionType.String,
-        name: 'question',
-        description: 'The question to ask the bot.',
-        required: true,
-        maxLength: 1024,
-      },
-      {
-        type: ApplicationCommandOptionType.String,
-        name: 'behavior',
-        description: 'Specify how the bot should behave.',
-        maxLength: 1024,
-      },
-      {
-        type: ApplicationCommandOptionType.Boolean,
-        name: 'hidden',
-        description: 'Whether or not the response should be shown.',
-      },
-    ],
-  },
-  execute: async (interaction: Interaction) => {
-    if (!interaction.isChatInputCommand()) {
-      return;
-    }
-
+export default new Command({
+  data: new SlashCommandBuilder()
+    .setName('ask')
+    .setDescription('Ask anything!')
+    .addStringOption((option) =>
+      option
+        .setName('question')
+        .setDescription('The question to ask the bot.')
+        .setRequired(true)
+        .setMaxLength(1024)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('behavior')
+        .setDescription('Specify how the bot should behave.')
+        .setMaxLength(1024)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName('hidden')
+        .setDescription('Whether or not the response should be shown.')
+    ),
+  execute: async (interaction: ChatInputCommandInteraction) => {
     const input = {
       question: interaction.options.getString('question') ?? '',
       behavior: interaction.options.getString('behavior') ?? '',

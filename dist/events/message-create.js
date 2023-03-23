@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const discord_module_loader_1 = require("discord-module-loader");
+const discord_module_loader_1 = require("@biscxit/discord-module-loader");
 const discord_js_1 = require("discord.js");
 const lodash_1 = require("lodash");
 const config_1 = tslib_1.__importDefault(require("../config"));
@@ -80,27 +80,30 @@ async function handleDirectMessage(client, channel, message) {
         });
     }, 2000);
 }
-exports.default = new discord_module_loader_1.DiscordEvent(discord_js_1.Events.MessageCreate, async (message) => {
-    const client = message.client;
-    if (message.author.id === client.user.id ||
-        message.type !== discord_js_1.MessageType.Default ||
-        !message.content ||
-        !(0, lodash_1.isEmpty)(message.embeds) ||
-        !(0, lodash_1.isEmpty)(message.mentions.members)) {
-        return;
-    }
-    const channel = message.channel;
-    switch (channel.type) {
-        case discord_js_1.ChannelType.DM:
-            handleDirectMessage(client, channel.partial ? await channel.fetch() : channel, message);
-            break;
-        case discord_js_1.ChannelType.PublicThread:
-        case discord_js_1.ChannelType.PrivateThread:
-            handleThreadMessage(client, channel, message);
-            break;
-        default:
+exports.default = new discord_module_loader_1.Event({
+    name: discord_js_1.Events.MessageCreate,
+    execute: async (message) => {
+        const client = message.client;
+        if (message.author.id === client.user.id ||
+            message.type !== discord_js_1.MessageType.Default ||
+            !message.content ||
+            !(0, lodash_1.isEmpty)(message.embeds) ||
+            !(0, lodash_1.isEmpty)(message.mentions.members)) {
             return;
-    }
+        }
+        const channel = message.channel;
+        switch (channel.type) {
+            case discord_js_1.ChannelType.DM:
+                handleDirectMessage(client, channel.partial ? await channel.fetch() : channel, message);
+                break;
+            case discord_js_1.ChannelType.PublicThread:
+            case discord_js_1.ChannelType.PrivateThread:
+                handleThreadMessage(client, channel, message);
+                break;
+            default:
+                return;
+        }
+    },
 });
 function isLastMessageStale(message, lastMessage, botId) {
     return (lastMessage !== null &&

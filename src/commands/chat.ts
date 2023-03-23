@@ -1,13 +1,13 @@
-import { DiscordCommand } from 'discord-module-loader';
+import { Command } from '@biscxit/discord-module-loader';
 import {
-  ApplicationCommandOptionType,
   ChannelType,
+  ChatInputCommandInteraction,
   Colors,
   DiscordAPIError,
   EmbedBuilder,
-  Interaction,
   PermissionsBitField,
   RESTJSONErrorCodes,
+  SlashCommandBuilder,
   ThreadAutoArchiveDuration,
 } from 'discord.js';
 import { truncate } from 'lodash';
@@ -35,31 +35,24 @@ import Conversation from '@/models/conversation';
 
 const rateLimiter = new RateLimiter(5, 900000);
 
-export default new DiscordCommand({
-  command: {
-    name: 'chat',
-    description: 'Start a conversation!',
-    options: [
-      {
-        type: ApplicationCommandOptionType.String,
-        name: 'message',
-        description: 'The message to start the conversation with.',
-        required: true,
-        maxLength: 1024,
-      },
-      {
-        type: ApplicationCommandOptionType.String,
-        name: 'behavior',
-        description: 'Specify how the bot should behave.',
-        maxLength: 1024,
-      },
-    ],
-  },
-  execute: async (interaction: Interaction) => {
-    if (!interaction.isChatInputCommand()) {
-      return;
-    }
-
+export default new Command({
+  data: new SlashCommandBuilder()
+    .setName('chat')
+    .setDescription('Start a conversation!')
+    .addStringOption((option) =>
+      option
+        .setName('message')
+        .setDescription('The message to start the conversation with.')
+        .setRequired(true)
+        .setMaxLength(1024)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('behavior')
+        .setDescription('Specify how the bot should behave.')
+        .setMaxLength(1024)
+    ),
+  execute: async (interaction: ChatInputCommandInteraction) => {
     const validator = validatePermissions(
       interaction.guild?.members.me?.permissions,
       [

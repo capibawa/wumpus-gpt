@@ -2,10 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const limiter_1 = require("limiter");
 class RateLimiter {
+    attempts;
+    interval;
+    limiters = {};
     constructor(attempts, interval) {
         this.attempts = attempts;
         this.interval = interval;
-        this.limiters = {};
     }
     attempt(key, callback) {
         let limiter = this.limiters[key];
