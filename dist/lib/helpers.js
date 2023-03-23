@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getThreadPrefix = exports.destroyThread = exports.detachComponents = exports.validatePermissions = exports.buildThreadContext = exports.buildContext = void 0;
+exports.getThreadPrefix = exports.destroyThread = exports.detachComponents = exports.buildThreadContext = exports.buildContext = void 0;
 const tslib_1 = require("tslib");
 const format_1 = tslib_1.__importDefault(require("date-fns/format"));
 const discord_js_1 = require("discord.js");
@@ -86,30 +86,6 @@ function buildThreadContext(messages, userMessage, botId) {
     return buildContext(context, userMessage, behavior);
 }
 exports.buildThreadContext = buildThreadContext;
-function validatePermissions(permissions, requiredPermissions) {
-    const required = new discord_js_1.PermissionsBitField(requiredPermissions);
-    if (!permissions) {
-        return {
-            fails: true,
-            message: 'Unable to fetch permissions.',
-            permissions: required.toArray(),
-        };
-    }
-    const missingPermissions = permissions.missing(requiredPermissions);
-    if (missingPermissions.length > 0) {
-        return {
-            fails: true,
-            message: `Missing permissions: ${missingPermissions.join(', ')}`,
-            permissions: required.toArray(),
-        };
-    }
-    return {
-        fails: false,
-        message: '',
-        permissions: required.toArray(),
-    };
-}
-exports.validatePermissions = validatePermissions;
 async function detachComponents(messages, botId) {
     try {
         await Promise.all(messages.map((message) => {

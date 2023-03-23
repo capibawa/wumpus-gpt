@@ -25,21 +25,15 @@ exports.default = new discord_module_loader_1.Command({
         .setName('behavior')
         .setDescription('Specify how the bot should behave.')
         .setMaxLength(1024)),
+    requiredBotPermissions: [
+        discord_js_1.PermissionsBitField.Flags.SendMessages,
+        discord_js_1.PermissionsBitField.Flags.SendMessagesInThreads,
+        discord_js_1.PermissionsBitField.Flags.CreatePublicThreads,
+        discord_js_1.PermissionsBitField.Flags.CreatePrivateThreads,
+        discord_js_1.PermissionsBitField.Flags.ManageThreads,
+        discord_js_1.PermissionsBitField.Flags.ReadMessageHistory,
+    ],
     execute: async (interaction) => {
-        const validator = (0, helpers_1.validatePermissions)(interaction.guild?.members.me?.permissions, [
-            discord_js_1.PermissionsBitField.Flags.SendMessages,
-            discord_js_1.PermissionsBitField.Flags.SendMessagesInThreads,
-            discord_js_1.PermissionsBitField.Flags.CreatePublicThreads,
-            discord_js_1.PermissionsBitField.Flags.CreatePrivateThreads,
-            discord_js_1.PermissionsBitField.Flags.ManageThreads,
-            discord_js_1.PermissionsBitField.Flags.ReadMessageHistory,
-        ]);
-        if (validator.fails) {
-            await interaction.reply({
-                embeds: [(0, embeds_1.createErrorEmbed)(validator.message)],
-            });
-            return;
-        }
         const input = {
             message: interaction.options.getString('message') ?? '',
             behavior: interaction.options.getString('behavior') ?? '',
@@ -129,8 +123,7 @@ exports.default = new discord_module_loader_1.Command({
                     if (err.code === discord_js_1.RESTJSONErrorCodes.MissingAccess ||
                         err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions) {
                         error =
-                            'Missing permissions. Ensure that the bot has the following: ' +
-                                `${validator.permissions.join(', ')}.`;
+                            'Missing permissions. Make sure that the bot can create/manage threads, and send messages in threads.';
                     }
                 }
                 else {

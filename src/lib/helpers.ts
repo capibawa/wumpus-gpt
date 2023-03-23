@@ -1,13 +1,5 @@
 import format from 'date-fns/format';
-import {
-  Collection,
-  Message,
-  MessageType,
-  PermissionResolvable,
-  PermissionsBitField,
-  PermissionsString,
-  ThreadChannel,
-} from 'discord.js';
+import { Collection, Message, MessageType, ThreadChannel } from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import {
   ChatCompletionRequestMessage,
@@ -130,37 +122,6 @@ export function buildThreadContext(
   ];
 
   return buildContext(context, userMessage, behavior);
-}
-
-export function validatePermissions(
-  permissions: Readonly<PermissionsBitField> | undefined,
-  requiredPermissions: PermissionResolvable
-): { fails: boolean; message: string; permissions: Array<PermissionsString> } {
-  const required = new PermissionsBitField(requiredPermissions);
-
-  if (!permissions) {
-    return {
-      fails: true,
-      message: 'Unable to fetch permissions.',
-      permissions: required.toArray(),
-    };
-  }
-
-  const missingPermissions = permissions.missing(requiredPermissions);
-
-  if (missingPermissions.length > 0) {
-    return {
-      fails: true,
-      message: `Missing permissions: ${missingPermissions.join(', ')}`,
-      permissions: required.toArray(),
-    };
-  }
-
-  return {
-    fails: false,
-    message: '',
-    permissions: required.toArray(),
-  };
 }
 
 export async function detachComponents(
