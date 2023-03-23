@@ -3,7 +3,6 @@ import {
   ChannelType,
   ChatInputCommandInteraction,
   Colors,
-  DiscordAPIError,
   EmbedBuilder,
   PermissionsBitField,
   RESTJSONErrorCodes,
@@ -19,7 +18,12 @@ import {
   createThreadEmbed,
   createThreadErrorEmbed,
 } from '@/lib/embeds';
-import { buildContext, destroyThread, getThreadPrefix } from '@/lib/helpers';
+import {
+  buildContext,
+  destroyThread,
+  getThreadPrefix,
+  isApiError,
+} from '@/lib/helpers';
 import {
   CompletionStatus,
   createChatCompletion,
@@ -173,7 +177,7 @@ export default new Command({
       } catch (err) {
         let error = undefined;
 
-        if (err instanceof DiscordAPIError) {
+        if (isApiError(err)) {
           if (
             err.code === RESTJSONErrorCodes.MissingAccess ||
             err.code === RESTJSONErrorCodes.MissingPermissions

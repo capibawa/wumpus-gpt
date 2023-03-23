@@ -46,8 +46,7 @@ async function handleRegenerateInteraction(interaction, client, channel, message
             });
         }
         catch (err) {
-            if (!(err instanceof discord_js_1.DiscordAPIError &&
-                err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
+            if (!((0, helpers_1.isApiError)(err) && err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
                 console.error(err);
             }
         }

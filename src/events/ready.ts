@@ -1,9 +1,10 @@
 import { Event } from '@biscxit/discord-module-loader';
 import Cron from 'croner';
-import { Client, DiscordAPIError, Events } from 'discord.js';
+import { Client, Events } from 'discord.js';
 
 import config from '@/config';
 import pruneThreads from '@/jobs/prune-threads';
+import { isApiError } from '@/lib/helpers';
 
 export default new Event({
   name: Events.ClientReady,
@@ -16,7 +17,7 @@ export default new Event({
     process.on('uncaughtException', (err) => {
       console.error(err);
 
-      if (!(err instanceof DiscordAPIError)) {
+      if (!isApiError(err)) {
         process.exit(1);
       }
     });
@@ -24,7 +25,7 @@ export default new Event({
     process.on('unhandledRejection', (err) => {
       console.error(err);
 
-      if (!(err instanceof DiscordAPIError)) {
+      if (!isApiError(err)) {
         process.exit(1);
       }
     });

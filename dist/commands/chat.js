@@ -119,7 +119,7 @@ exports.default = new discord_module_loader_1.Command({
             }
             catch (err) {
                 let error = undefined;
-                if (err instanceof discord_js_1.DiscordAPIError) {
+                if ((0, helpers_1.isApiError)(err)) {
                     if (err.code === discord_js_1.RESTJSONErrorCodes.MissingAccess ||
                         err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions) {
                         error =

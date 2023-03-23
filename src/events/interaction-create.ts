@@ -5,7 +5,6 @@ import {
   ChannelType,
   Client,
   Colors,
-  DiscordAPIError,
   Events,
   Interaction,
   Message,
@@ -16,7 +15,7 @@ import { delay } from 'lodash';
 
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import { createErrorEmbed } from '@/lib/embeds';
-import { buildThreadContext } from '@/lib/helpers';
+import { buildThreadContext, isApiError } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import RateLimiter from '@/lib/rate-limiter';
 
@@ -91,10 +90,7 @@ async function handleRegenerateInteraction(
       });
     } catch (err) {
       if (
-        !(
-          err instanceof DiscordAPIError &&
-          err.code === RESTJSONErrorCodes.MissingPermissions
-        )
+        !(isApiError(err) && err.code === RESTJSONErrorCodes.MissingPermissions)
       ) {
         console.error(err);
       }

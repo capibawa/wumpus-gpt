@@ -3,7 +3,6 @@ import {
   ChannelType,
   Client,
   Colors,
-  DiscordAPIError,
   DMChannel,
   EmbedBuilder,
   Events,
@@ -21,6 +20,7 @@ import {
   buildThreadContext,
   detachComponents,
   getThreadPrefix,
+  isApiError,
 } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
 import Conversation from '@/models/conversation';
@@ -98,10 +98,7 @@ async function handleThreadMessage(
       }
     } catch (err) {
       if (
-        !(
-          err instanceof DiscordAPIError &&
-          err.code === RESTJSONErrorCodes.MissingPermissions
-        )
+        !(isApiError(err) && err.code === RESTJSONErrorCodes.MissingPermissions)
       ) {
         console.error(err);
       }

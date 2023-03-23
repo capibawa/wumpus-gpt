@@ -1,5 +1,11 @@
 import format from 'date-fns/format';
-import { Collection, Message, MessageType, ThreadChannel } from 'discord.js';
+import {
+  Collection,
+  DiscordAPIError,
+  Message,
+  MessageType,
+  ThreadChannel,
+} from 'discord.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import {
   ChatCompletionRequestMessage,
@@ -137,20 +143,37 @@ export async function detachComponents(
       })
     );
   } catch (err) {
-    console.error(err);
+    logError(err);
   }
 }
 
+// TODO: Notify user if the thread could not be deleted.
 export async function destroyThread(channel: ThreadChannel): Promise<void> {
-  const starterMessage = await channel.fetchStarterMessage();
+  try {
+    const starterMessage = await channel.fetchStarterMessage();
 
-  await channel.delete();
+    await channel.delete();
 
-  if (starterMessage) {
-    await starterMessage.delete();
+    if (starterMessage) {
+      await starterMessage.delete();
+    }
+  } catch (err) {
+    logError(err);
   }
 }
 
 export function getThreadPrefix(): string {
   return config.bot.thread_prefix ? config.bot.thread_prefix + ' ' : '';
+}
+
+export function isApiError(err: unknown): err is DiscordAPIError {
+  return err instanceof DiscordAPIError;
+}
+
+export function logError(err: unknown, apiErrors = false): void {
+  if (isApiError(err) && !apiErrors) {
+    return;
+  }
+
+  console.error(err);
 }

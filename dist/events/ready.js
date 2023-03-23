@@ -6,6 +6,7 @@ const croner_1 = tslib_1.__importDefault(require("croner"));
 const discord_js_1 = require("discord.js");
 const config_1 = tslib_1.__importDefault(require("../config"));
 const prune_threads_1 = tslib_1.__importDefault(require("../jobs/prune-threads"));
+const helpers_1 = require("../lib/helpers");
 exports.default = new discord_module_loader_1.Event({
     name: discord_js_1.Events.ClientReady,
     once: true,
@@ -15,13 +16,13 @@ exports.default = new discord_module_loader_1.Event({
         }
         process.on('uncaughtException', (err) => {
             console.error(err);
-            if (!(err instanceof discord_js_1.DiscordAPIError)) {
+            if (!(0, helpers_1.isApiError)(err)) {
                 process.exit(1);
             }
         });
         process.on('unhandledRejection', (err) => {
             console.error(err);
-            if (!(err instanceof discord_js_1.DiscordAPIError)) {
+            if (!(0, helpers_1.isApiError)(err)) {
                 process.exit(1);
             }
         });
