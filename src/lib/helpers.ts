@@ -1,9 +1,9 @@
 import format from 'date-fns/format';
 import {
-  BitFieldResolvable,
   Collection,
   Message,
   MessageType,
+  PermissionResolvable,
   PermissionsBitField,
   PermissionsString,
   ThreadChannel,
@@ -134,35 +134,32 @@ export function buildThreadContext(
 
 export function validatePermissions(
   permissions: Readonly<PermissionsBitField> | undefined,
-  bits: BitFieldResolvable<PermissionsString, bigint>
-): { fails: boolean; message: string; permissions: Array<string> } {
-  const requiredPermissions = new PermissionsBitField([
-    bits,
-    PermissionsBitField.Flags.UseApplicationCommands,
-  ]);
+  requiredPermissions: PermissionResolvable
+): { fails: boolean; message: string; permissions: Array<PermissionsString> } {
+  const required = new PermissionsBitField(requiredPermissions);
 
   if (!permissions) {
     return {
       fails: true,
       message: 'Unable to fetch permissions.',
-      permissions: requiredPermissions.toArray(),
+      permissions: required.toArray(),
     };
   }
 
-  const missingPermissions = permissions.missing(requiredPermissions.valueOf());
+  const missingPermissions = permissions.missing(requiredPermissions);
 
   if (missingPermissions.length > 0) {
     return {
       fails: true,
       message: `Missing permissions: ${missingPermissions.join(', ')}`,
-      permissions: requiredPermissions.toArray(),
+      permissions: required.toArray(),
     };
   }
 
   return {
     fails: false,
     message: '',
-    permissions: requiredPermissions.toArray(),
+    permissions: required.toArray(),
   };
 }
 
