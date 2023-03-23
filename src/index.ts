@@ -5,7 +5,10 @@ import config from '@/config';
 import sequelize from '@/lib/sequelize';
 import Conversation from '@/models/conversation';
 
+const isRunningWithTsNode = process.argv.some((arg) => arg.includes('ts-node'));
+
 const client = new Client({
+  rootDir: isRunningWithTsNode ? 'src' : 'dist',
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,

@@ -16,7 +16,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@biscxit/discord-module-loader": "^1.0.0",
+    "@biscxit/discord-module-loader": "^1.0.1",
     "croner": "^6.0.2",
     "date-fns": "^2.29.3",
     "discord.js": "^14.8.0",
