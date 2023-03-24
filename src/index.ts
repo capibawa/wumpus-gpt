@@ -8,8 +8,10 @@ import Conversation from '@/models/conversation';
 const isDev = process.argv.some((arg) => arg.includes('ts-node'));
 
 const client = new Client({
-  eventsDir: isDev ? 'src/events' : 'dist/events',
-  commandsDir: isDev ? 'src/commands' : 'dist/commands',
+  moduleLoader: {
+    eventsDir: isDev ? 'src/events' : 'dist/events',
+    commandsDir: isDev ? 'src/commands' : 'dist/commands',
+  },
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,

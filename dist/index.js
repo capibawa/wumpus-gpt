@@ -8,8 +8,10 @@ const sequelize_1 = tslib_1.__importDefault(require("./lib/sequelize"));
 const conversation_1 = tslib_1.__importDefault(require("./models/conversation"));
 const isDev = process.argv.some((arg) => arg.includes('ts-node'));
 const client = new discord_module_loader_1.Client({
-    eventsDir: isDev ? 'src/events' : 'dist/events',
-    commandsDir: isDev ? 'src/commands' : 'dist/commands',
+    moduleLoader: {
+        eventsDir: isDev ? 'src/events' : 'dist/events',
+        commandsDir: isDev ? 'src/commands' : 'dist/commands',
+    },
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
         discord_js_1.GatewayIntentBits.GuildMessages,

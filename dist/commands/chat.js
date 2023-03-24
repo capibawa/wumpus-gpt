@@ -25,7 +25,7 @@ exports.default = new discord_module_loader_1.Command({
         .setName('behavior')
         .setDescription('Specify how the bot should behave.')
         .setMaxLength(1024)),
-    requiredBotPermissions: [
+    botPermissions: [
         discord_js_1.PermissionsBitField.Flags.SendMessages,
         discord_js_1.PermissionsBitField.Flags.SendMessagesInThreads,
         discord_js_1.PermissionsBitField.Flags.CreatePublicThreads,

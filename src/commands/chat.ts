@@ -51,7 +51,7 @@ export default new Command({
         .setDescription('Specify how the bot should behave.')
         .setMaxLength(1024)
     ),
-  requiredBotPermissions: [
+  botPermissions: [
     PermissionsBitField.Flags.SendMessages,
     PermissionsBitField.Flags.SendMessagesInThreads,
     PermissionsBitField.Flags.CreatePublicThreads,
