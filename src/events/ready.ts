@@ -22,14 +22,6 @@ export default new Event({
       }
     });
 
-    process.on('unhandledRejection', (err) => {
-      console.error(err);
-
-      if (!isApiError(err)) {
-        process.exit(1);
-      }
-    });
-
     const job = Cron('* * * * *', async () => {
       await pruneThreads(client);
     });
