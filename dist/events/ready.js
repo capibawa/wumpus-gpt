@@ -20,12 +20,6 @@ exports.default = new discord_module_loader_1.Event({
                 process.exit(1);
             }
         });
-        process.on('unhandledRejection', (err) => {
-            console.error(err);
-            if (!(0, helpers_1.isApiError)(err)) {
-                process.exit(1);
-            }
-        });
         const job = (0, croner_1.default)('* * * * *', async () => {
             await (0, prune_threads_1.default)(client);
         });

@@ -24,7 +24,8 @@ exports.default = new discord_module_loader_1.Command({
         .addStringOption((option) => option
         .setName('behavior')
         .setDescription('Specify how the bot should behave.')
-        .setMaxLength(1024)),
+        .setMaxLength(1024))
+        .setDMPermission(false),
     botPermissions: [
         discord_js_1.PermissionsBitField.Flags.SendMessages,
         discord_js_1.PermissionsBitField.Flags.SendMessagesInThreads,
