@@ -1,0 +1,23 @@
+name: Deploy To VPS
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executing remote SSH commands
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            pm2 delete all
+            cd /root/wumpus-gpt
+            git pull
+            npm install --only=prod
+            pm2 start npm --name "wumpus-gpt" -- start
