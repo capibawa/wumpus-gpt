@@ -19,5 +19,5 @@ jobs:
             pm2 delete all
             cd /root/wumpus-gpt
             git pull
-            npm install --only=prod
+            npm install --omit=dev --ignore-scripts
             pm2 start npm --name "wumpus-gpt" -- start
