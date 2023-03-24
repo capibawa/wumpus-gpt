@@ -50,7 +50,8 @@ export default new Command({
         .setName('behavior')
         .setDescription('Specify how the bot should behave.')
         .setMaxLength(1024)
-    ),
+    )
+    .setDMPermission(false),
   botPermissions: [
     PermissionsBitField.Flags.SendMessages,
     PermissionsBitField.Flags.SendMessagesInThreads,
