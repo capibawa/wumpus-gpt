@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@biscxit/discord-module-loader": "^0.3.3",
-    "croner": "^6.0.2",
+    "croner": "^6.0.3",
     "date-fns": "^2.29.3",
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
