@@ -1,11 +1,12 @@
 {
   "name": "wumpus-gpt",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
   "author": {
     "name": "biscxit",
     "url": "https://github.com/biscxit"
   },
-  "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
