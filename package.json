@@ -16,7 +16,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@biscxit/discord-module-loader": "^0.3.3",
+    "@biscxit/discord-module-loader": "^0.3.4",
     "croner": "^6.0.3",
     "date-fns": "^2.29.3",
     "discord.js": "^14.8.0",
@@ -29,10 +29,10 @@
     "sequelize": "^6.30.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.191",
+    "@types/lodash": "^4.14.192",
     "@types/node": "^18.15.10",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
     "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.8.0",
     "husky": "^8.0.3",
