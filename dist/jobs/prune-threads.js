@@ -19,13 +19,15 @@ async function pruneThreads(client) {
             try {
                 channel = await client.channels.fetch(conversation.channelId);
             }
-            catch (err) { }
+            catch (err) {
+            }
             if (channel && channel.isThread()) {
                 let message = null;
                 try {
                     message = await channel.parent?.messages.fetch(conversation.messageId);
                 }
-                catch (err) { }
+                catch (err) {
+                }
                 if (message && message.embeds.length > 0) {
                     const embed = message.embeds[0];
                     await message.edit({

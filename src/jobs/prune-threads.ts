@@ -21,7 +21,9 @@ export default async function pruneThreads(
 
       try {
         channel = await client.channels.fetch(conversation.channelId);
-      } catch (err) {}
+      } catch (err) {
+        /* empty */
+      }
 
       if (channel && channel.isThread()) {
         let message = null;
@@ -30,7 +32,9 @@ export default async function pruneThreads(
           message = await channel.parent?.messages.fetch(
             conversation.messageId
           );
-        } catch (err) {}
+        } catch (err) {
+          /* empty */
+        }
 
         if (message && message.embeds.length > 0) {
           const embed = message.embeds[0];

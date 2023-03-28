@@ -215,7 +215,9 @@ export async function generateTitle(
 
       return title;
     }
-  } catch (err) {}
+  } catch (err) {
+    logError(err);
+  }
 
   return '';
 }

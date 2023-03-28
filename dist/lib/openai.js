@@ -175,7 +175,9 @@ async function generateTitle(userMessage, botMessage) {
             return title;
         }
     }
-    catch (err) { }
+    catch (err) {
+        logError(err);
+    }
     return '';
 }
 exports.generateTitle = generateTitle;
