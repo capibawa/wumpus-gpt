@@ -1,16 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
 const discord_module_loader_1 = require("@biscxit/discord-module-loader");
 const builders_1 = require("@discordjs/builders");
 const discord_js_1 = require("discord.js");
 const lodash_1 = require("lodash");
+const rate_limiter_flexible_1 = require("rate-limiter-flexible");
 const buttons_1 = require("../lib/buttons");
 const embeds_1 = require("../lib/embeds");
 const helpers_1 = require("../lib/helpers");
 const openai_1 = require("../lib/openai");
-const rate_limiter_1 = tslib_1.__importDefault(require("../lib/rate-limiter"));
-const rateLimiter = new rate_limiter_1.default(3, 'minute');
+const rateLimiter = new rate_limiter_flexible_1.RateLimiterMemory({ points: 3, duration: 60 });
 async function handleRegenerateInteraction(interaction, client, channel, message) {
     const members = await channel.members.fetch();
     if (!members.has(interaction.user.id)) {
@@ -22,7 +21,9 @@ async function handleRegenerateInteraction(interaction, client, channel, message
         });
         return;
     }
-    const executed = rateLimiter.attempt(interaction.user.id, async () => {
+    rateLimiter
+        .consume(interaction.user.id)
+        .then(async () => {
         try {
             await message.edit({
                 content: message.content,
@@ -46,17 +47,18 @@ async function handleRegenerateInteraction(interaction, client, channel, message
             });
         }
         catch (err) {
-            if (!((0, helpers_1.isApiError)(err) && err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
+            if (!((0, helpers_1.isApiError)(err) &&
+                err.code === discord_js_1.RESTJSONErrorCodes.MissingPermissions)) {
                 console.error(err);
             }
         }
-    });
-    if (!executed) {
+    })
+        .catch(async () => {
         await interaction.reply({
             embeds: [(0, embeds_1.createErrorEmbed)('You are currently being rate limited.')],
             ephemeral: true,
         });
-    }
+    });
 }
 exports.default = new discord_module_loader_1.Event({
     name: discord_js_1.Events.InteractionCreate,
