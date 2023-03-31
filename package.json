@@ -19,16 +19,16 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@biscxit/discord-module-loader": "^0.3.4",
+    "@biscxit/discord-module-loader": "^0.4.0",
     "croner": "^6.0.3",
     "date-fns": "^2.29.3",
     "discord.js": "^14.8.0",
     "dotenv": "^16.0.3",
     "gpt3-tokenizer": "^1.1.5",
-    "limiter": "^2.1.0",
     "lodash": "^4.17.21",
     "mysql2": "^3.2.0",
     "openai": "^3.2.1",
+    "rate-limiter-flexible": "^2.4.1",
     "sequelize": "^6.30.0"
   },
   "devDependencies": {

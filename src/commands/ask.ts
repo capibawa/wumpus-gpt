@@ -4,9 +4,6 @@ import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { createErrorEmbed } from '@/lib/embeds';
 import { buildContext } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
-import RateLimiter from '@/lib/rate-limiter';
-
-const rateLimiter = new RateLimiter(3, 'minute');
 
 export default new Command({
   data: new SlashCommandBuilder()
@@ -30,6 +27,10 @@ export default new Command({
         .setName('hidden')
         .setDescription('Whether or not the response should be shown.')
     ),
+  rateLimiter: {
+    points: 5,
+    duration: 60,
+  },
   execute: async (interaction: ChatInputCommandInteraction) => {
     const input = {
       question: interaction.options.getString('question') ?? '',
@@ -46,25 +47,16 @@ export default new Command({
       return;
     }
 
-    const executed = rateLimiter.attempt(interaction.user.id, async () => {
-      await interaction.deferReply({ ephemeral: input.hidden });
+    await interaction.deferReply({ ephemeral: input.hidden });
 
-      const completion = await createChatCompletion(
-        buildContext([], input.question, input.behavior)
-      );
+    const completion = await createChatCompletion(
+      buildContext([], input.question, input.behavior)
+    );
 
-      await interaction.editReply(
-        completion.status === CompletionStatus.Ok
-          ? { content: completion.message }
-          : { embeds: [createErrorEmbed(completion.message)] }
-      );
-    });
-
-    if (!executed) {
-      await interaction.reply({
-        embeds: [createErrorEmbed('You are currently being rate limited.')],
-        ephemeral: true,
-      });
-    }
+    await interaction.editReply(
+      completion.status === CompletionStatus.Ok
+        ? { content: completion.message }
+        : { embeds: [createErrorEmbed(completion.message)] }
+    );
   },
 });

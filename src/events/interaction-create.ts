@@ -12,14 +12,14 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import { delay } from 'lodash';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 import { createActionRow, createRegenerateButton } from '@/lib/buttons';
 import { createErrorEmbed } from '@/lib/embeds';
 import { buildThreadContext, isApiError } from '@/lib/helpers';
 import { CompletionStatus, createChatCompletion } from '@/lib/openai';
-import RateLimiter from '@/lib/rate-limiter';
 
-const rateLimiter = new RateLimiter(3, 'minute');
+const rateLimiter = new RateLimiterMemory({ points: 3, duration: 60 });
 
 async function handleRegenerateInteraction(
   interaction: ButtonInteraction,
@@ -42,67 +42,71 @@ async function handleRegenerateInteraction(
     return;
   }
 
-  const executed = rateLimiter.attempt(interaction.user.id, async () => {
-    try {
-      await message.edit({
-        content: message.content,
-        components: [createActionRow(createRegenerateButton(true))],
-      });
+  rateLimiter
+    .consume(interaction.user.id)
+    .then(async () => {
+      try {
+        await message.edit({
+          content: message.content,
+          components: [createActionRow(createRegenerateButton(true))],
+        });
 
-      await interaction.deferUpdate();
+        await interaction.deferUpdate();
 
-      const messages = await channel.messages.fetch({ before: message.id });
+        const messages = await channel.messages.fetch({ before: message.id });
 
-      const previousMessage = messages.first();
+        const previousMessage = messages.first();
 
-      if (!previousMessage) {
-        await handleFailedRequest(
-          interaction,
-          message,
-          'Could not find any previous messages.'
+        if (!previousMessage) {
+          await handleFailedRequest(
+            interaction,
+            message,
+            'Could not find any previous messages.'
+          );
+
+          return;
+        }
+
+        const completion = await createChatCompletion(
+          buildThreadContext(
+            messages.filter((message) => message.id !== previousMessage.id),
+            previousMessage.content,
+            client.user.id
+          )
         );
 
-        return;
+        if (completion.status !== CompletionStatus.Ok) {
+          await handleFailedRequest(
+            interaction,
+            message,
+            completion.message,
+            completion.status === CompletionStatus.UnexpectedError
+          );
+
+          return;
+        }
+
+        await interaction.editReply({
+          content: completion.message,
+          components: [createActionRow(createRegenerateButton())],
+        });
+      } catch (err) {
+        if (
+          !(
+            isApiError(err) &&
+            err.code === RESTJSONErrorCodes.MissingPermissions
+          )
+        ) {
+          console.error(err);
+        }
       }
-
-      const completion = await createChatCompletion(
-        buildThreadContext(
-          messages.filter((message) => message.id !== previousMessage.id),
-          previousMessage.content,
-          client.user.id
-        )
-      );
-
-      if (completion.status !== CompletionStatus.Ok) {
-        await handleFailedRequest(
-          interaction,
-          message,
-          completion.message,
-          completion.status === CompletionStatus.UnexpectedError
-        );
-
-        return;
-      }
-
-      await interaction.editReply({
-        content: completion.message,
-        components: [createActionRow(createRegenerateButton())],
+    })
+    .catch(async () => {
+      await interaction.reply({
+        embeds: [createErrorEmbed('You are currently being rate limited.')],
+        ephemeral: true,
       });
-    } catch (err) {
-      if (
-        !(isApiError(err) && err.code === RESTJSONErrorCodes.MissingPermissions)
-      ) {
-        console.error(err);
-      }
-    }
-  });
-
-  if (!executed) {
-    await interaction.reply({
-      embeds: [createErrorEmbed('You are currently being rate limited.')],
-      ephemeral: true,
     });
-  }
 }
 
 export default new Event({

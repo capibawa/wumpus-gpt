@@ -7,9 +7,6 @@ import {
 
 import { createErrorEmbed } from '@/lib/embeds';
 import { CompletionStatus, createImage } from '@/lib/openai';
-import RateLimiter from '@/lib/rate-limiter';
-
-const rateLimiter = new RateLimiter(1, 'minute');
 
 export default new Command({
   data: new SlashCommandBuilder()
@@ -27,6 +24,10 @@ export default new Command({
         .setName('hidden')
         .setDescription('Whether or not the response should be shown.')
     ),
+  rateLimiter: {
+    points: 3,
+    duration: 60,
+  },
   execute: async (interaction: ChatInputCommandInteraction) => {
     const input = {
       prompt: interaction.options.getString('prompt') ?? '',
@@ -42,29 +43,20 @@ export default new Command({
       return;
     }
 
-    const executed = rateLimiter.attempt(interaction.user.id, async () => {
-      await interaction.deferReply({ ephemeral: input.hidden });
+    await interaction.deferReply({ ephemeral: input.hidden });
 
-      const completion = await createImage(input.prompt);
+    const completion = await createImage(input.prompt);
 
-      const messageOptions: InteractionEditReplyOptions = {};
+    const messageOptions: InteractionEditReplyOptions = {};
 
-      if (completion.status !== CompletionStatus.Ok) {
-        messageOptions.content = completion.message;
-      } else {
-        messageOptions.files = [
-          { attachment: completion.message, name: 'image.png' },
-        ];
-      }
-
-      await interaction.editReply(messageOptions);
-    });
-
-    if (!executed) {
-      await interaction.reply({
-        embeds: [createErrorEmbed('You are currently being rate limited.')],
-        ephemeral: true,
-      });
+    if (completion.status !== CompletionStatus.Ok) {
+      messageOptions.content = completion.message;
+    } else {
+      messageOptions.files = [
+        { attachment: completion.message, name: 'image.png' },
+      ];
     }
+
+    await interaction.editReply(messageOptions);
   },
 });
