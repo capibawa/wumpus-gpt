@@ -19,7 +19,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "@biscxit/discord-module-loader": "^0.4.1",
+    "@biscxit/discord-module-loader": "^0.4.2",
     "croner": "^6.0.3",
     "date-fns": "^2.29.3",
     "discord.js": "^14.9.0",
@@ -34,8 +34,8 @@
   "devDependencies": {
     "@types/lodash": "^4.14.192",
     "@types/node": "^18.15.11",
-    "@typescript-eslint/eslint-plugin": "^5.57.0",
-    "@typescript-eslint/parser": "^5.57.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
     "eslint": "^8.37.0",
     "eslint-config-prettier": "^8.8.0",
     "husky": "^8.0.3",
