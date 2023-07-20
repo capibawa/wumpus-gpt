@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  wumpus-gpt-discord-bot:
+    build: .
+    image: wumpus-gpt-discord-bot
+    container_name: wumpus-gpt-discord-bot
+    env_file:
+      - .env
+    restart: unless-stopped
